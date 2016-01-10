@@ -6,7 +6,7 @@ Cette extension Firefox permet d'éviter la dispersion des données de l'utilisa
 
 En effet, le plus souvent, les sites commerciaux utilisent le header HTTP **Access-Control-Allow-Origin** avec la valeur '*'.
 Cette valeur permet de passer outre une protection normalement apportée par l'explorateur qui ne doit normalement pas accepter à partir d'une page d'un domaine de charger des ressources sur d'autres domaines.
-Ceci permet notemment de lutter contre une attaque de type **'Cross-Site-Scripting'** : voir https://en.wikipedia.org/wiki/Cross-site_scripting
+Ceci permet notemment de lutter contre une attaque de type [Cross-Site-Scripting](https://en.wikipedia.org/wiki/Cross-site_scripting)
 
 
 Dans cette première version, le **User-agent** est transformé en date et heure de la requête et le **Referer** est vidé de sa valeur fournie par l'explorateur.
@@ -28,7 +28,7 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 - Télécharger l'application [Elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 - Si vous êtes expert, changez la configuration située dans le répertoire **'config/elasticsearch.yml'**
 - Lancez Elasticsearch en mode service (démarrera à chaque lancement du système)
-- Exécuter les requêtes http suivantes à partir de **curl**, **wget**, l'extension firefox **HttpRequester**(https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
+- Exécuter les requêtes http suivantes à partir de **curl**, **wget**, l'extension firefox [HttpRequester](https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
 
     curl -XPUT http://localhost:9200/domaines -d '{
