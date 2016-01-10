@@ -33,27 +33,27 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 
 Installation d'un index de recherche:
 ```json
-    curl -XPUT http://localhost:9200/domaines -d '{
-    "settings": {
-        "number_of_shards": 3,
-        "number_of_replicas": 0
-    },
-    "mappings": {
-        "hote": {
-                "properties": {
-                       "ip": {
-                                "type": "geoip",
-                                "store": false
-                        },
-                        "date": {
-                                "type": "long",
-                                "store": false 
-                        },
-                        "fuseau": {
-    			        "type": "long",
-    			        "store": false
-                        }
-                }
+curl -XPUT http://localhost:9200/domaines -d '{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "hote": {
+      "properties": {
+        "ip": {
+          "type": "ip",
+          "store": false
+        },
+        "date": {
+          "type": "long",
+          "store": false
+        },
+        "fuseau": {
+          "type": "long",
+          "store": false
         }
+      }
     }
+  }
 ```
