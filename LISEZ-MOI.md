@@ -104,3 +104,14 @@ Pour reprendre ce module et augmenter son code:
   5. Exécuter le projet en exécutant un **'jpm run'**
 
 Voir la documentation [Mozilla Developper Network (MDN)](https://developer.mozilla.org/fr/docs/Mozilla/Add-ons/SDK/Tools/jpm)
+
+#Avantages
+
+Voici une image qui présente la différence observée lors d'un chargement de la page d'un journal d'information grand public:
+
+[[./imgs/Avantages-comparatifs.png|alt='Avantages comparatifs']]
+
+- En haut, le site chargé avec l'extension active
+- En bas, le site chargé sans extension
+
+A vous de voir ;-)
