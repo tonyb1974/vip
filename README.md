@@ -32,6 +32,7 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 - Exécuter les requêtes http suivantes à partir de [curl](http://man.cx/curl), [wget](http://man.cx/wget), l'extension firefox [HttpRequester](https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
 Installation d'un index de recherche:
+```json
     curl -XPUT http://localhost:9200/domaines -d '{
     "settings": {
         "number_of_shards": 3,
@@ -55,4 +56,4 @@ Installation d'un index de recherche:
                 }
         }
     }
-
+``
