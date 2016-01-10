@@ -31,7 +31,7 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 - Lancez [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) en mode service (démarrera à chaque lancement du système)
 - Exécuter les requêtes http suivantes à partir de [curl](http://man.cx/curl), [wget](http://man.cx/wget), l'extension firefox [HttpRequester](https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
-
+Installation d'un index de recherche:
     curl -XPUT http://localhost:9200/domaines -d '{
     "settings": {
         "number_of_shards": 3,
@@ -55,4 +55,4 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
                 }
         }
     }
-   
+
