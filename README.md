@@ -56,4 +56,4 @@ Installation d'un index de recherche:
                 }
         }
     }
-``
+```
