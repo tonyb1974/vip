@@ -9,7 +9,7 @@ Cette valeur permet de passer outre une protection normalement apportée par l'e
 Ceci permet notemment de lutter contre une attaque de type [Cross-Site-Scripting](https://en.wikipedia.org/wiki/Cross-site_scripting)
 
 
-Dans cette première version, le **User-agent** est transformé en date et heure de la requête et le **Referer** est vidé de sa valeur fournie par l'explorateur.
+> Dans cette première version, le **User-agent** est transformé en date et heure de la requête et le **Referer** est vidé de sa valeur fournie par l'explorateur.
 
 #Fonctionnement général
 
@@ -22,7 +22,7 @@ Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni a
 
 #Installation
 
-Pour fonctionner sans se fonder sur le **localStorage** HTML5, les noms de **domaines autorisés** ou **bannis** sont stockés dans un cluster **Elasticsearch**(Moteur de recherche).
+Pour fonctionner sans se fonder sur le [LocalStorage](http://www.w3.org/TR/webstorage/) HTML5, les noms de **domaines autorisés** ou **bannis** sont stockés dans un cluster **Elasticsearch**(Moteur de recherche).
 
 Ce moteur de recherche peut permettre à de nombreuses extensions de partager un stockage externe commun tout en proposant un moteur de recherche local utilisable par les utilisateurs du poste informatique.
 
