@@ -1,32 +1,34 @@
 # VIP
 
-Amélioration de la *VIePrivée* des utilisateurs **Firefox** lors de la navigation sur Internet
+Amélioration de la **VIePrivée** des utilisateurs **Firefox** lors de la navigation sur Internet
 
 Cette extension Firefox permet d'éviter la dispersion des données de l'utilisateur sur des domaines dont il n'a pas connaissance lors de connexions invisibles pour lui à différents domaines. Domaines dédiés le plus souvent au tracking ou à la publicité...
-En effet, le plus souvent, les sites commerciaux utilisent le header HTTP *Access-Control-Allow-Origin* avec la valeur '*'.
-Cette valeur permet de passer outre une protection normalement apportée par l'explorateur qui ne doit normalement pas accepter à partir d'une page d'un domaine de charger des ressources sur d'autres domaines.
-Ceci permet notemment de lutter contre une attaque de type *'Cross-Site-Scripting'* : voir https://en.wikipedia.org/wiki/Cross-site_scripting
 
-Dans cette première version, le *User-agent* est transformé en date et heure de la requête et le Referer est vidé de sa valeur fournie par l'explorateur.
+En effet, le plus souvent, les sites commerciaux utilisent le header HTTP **Access-Control-Allow-Origin** avec la valeur '*'.
+Cette valeur permet de passer outre une protection normalement apportée par l'explorateur qui ne doit normalement pas accepter à partir d'une page d'un domaine de charger des ressources sur d'autres domaines.
+Ceci permet notemment de lutter contre une attaque de type **'Cross-Site-Scripting'** : voir https://en.wikipedia.org/wiki/Cross-site_scripting
+
+
+Dans cette première version, le **User-agent** est transformé en date et heure de la requête et le **Referer** est vidé de sa valeur fournie par l'explorateur.
 
 #Fonctionnement général
 
-Cette extension, se base sur une *liste blanche* de *noms de domaines* qu'il est possible de visiter.
+Cette extension, se base sur une **liste blanche** de **noms de domaines** qu'il est possible de visiter.
 Si un domaine est connu de l'utilisateur, il est possible de visiter les sites internet de ce domaine.
 Si un domaine est inconnu de l'utilisateur, l'extension bloque la requête et ajoute le domaine en question à la liste des domaines bannis. Une notification système indique à l'utilisateur que des domaines ont été bloqués.
 
-La combinaison de touches *'Alt-c'* Permet à l'utilisateur de voir les domaines connus et les domaines bannis.
+La combinaison de touches **'Alt-c'** Permet à l'utilisateur de voir les domaines connus et les domaines bannis.
 Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni aux domaines connus.
 
 #Installation
 
-Pour fonctionner sans se fonder sur le *localStorage* HTML5, les noms de *domaines autorisés* ou *bannis* sont stockés dans un cluster *Elasticsearch*(Moteur de recherche).
+Pour fonctionner sans se fonder sur le **localStorage** HTML5, les noms de **domaines autorisés** ou **bannis** sont stockés dans un cluster **Elasticsearch**(Moteur de recherche).
 Ce moteur de recherche peut permettre à de nombreuses extensions de partager un stockage externe commun tout en proposant un moteur de recherche local utilisable par les utilisateurs du poste informatique.
 
 - Télécharger l'application *Elasticsearch* (https://www.elastic.co/downloads/elasticsearch)
-- Si vous êtes expert, changez la configuration située dans le répertoire *'config/elasticsearch.yml'*
+- Si vous êtes expert, changez la configuration située dans le répertoire **'config/elasticsearch.yml'**
 - Lancez Elasticsearch en mode service (démarrera à chaque lancement du système)
-- Exécuter les requêtes http suivantes à partir de *curl*, *wget*, l'extension firefox *HttpRequester*(https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
+- Exécuter les requêtes http suivantes à partir de **curl**, **wget**, l'extension firefox **HttpRequester**(https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
 '''
  curl -XPUT http://localhost:9200/domaines -d '{
