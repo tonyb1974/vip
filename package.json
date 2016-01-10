@@ -1,0 +1,15 @@
+{
+  "title": "Extension pour une VIP (Vie privée)",
+  "name": "vip",
+  "version": "0.0.1",
+  "description": "Un add-on pour protéger un maximum votre vie privée",
+  "main": "entree.js",
+  "author": "Tony Blanchard",
+  "engines": {
+    "firefox": ">=38.0a1"
+  },
+  "license": "CC BY-NC ",
+  "keywords": [
+    "jetpack"
+  ]
+}
