@@ -28,7 +28,7 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 
 - Télécharger l'application [Elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 - Si vous êtes expert, changez la configuration située dans le répertoire **'config/elasticsearch.yml'**
-- Lancez [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) en mode service (démarrera à chaque lancement du système)
+- Lancez [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) en mode service (démarera à chaque lancement du système)
 - Exécuter les requêtes http suivantes à partir de [curl](http://man.cx/curl), [wget](http://man.cx/wget), l'extension firefox [HttpRequester](https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
 Installation d'un index de recherche des domaines autorisés:
@@ -92,3 +92,14 @@ Dans le cas où l'installation du noeud [Elasticsearch](https://www.elastic.co/d
 > Pour celà, visiter l'adresse **about:config** et confirmez votre volonté de modifier les paramètres du navigateur.
 > 
 > Ensuite, sous la clef **extensions.vip.elastic**, donner l'adresse http du noeud à interroger. Ex: http://localhost:9200
+
+#Développement
+
+Pour reprendre ce module et augmenter son code:
+1- CLoner ce repository **Git**
+2- Installer [NodeJs](https://nodejs.org/en/)
+3- Exécuter la commande **'npm install'**
+4- Modifier le code à l'aide de votre ide préféré (Betbeans, IntelliJ,...)
+5- Exécuter le projet exécutant un **'jpm run'**
+
+Voir la documentation [Mozilla Developper Network (MDN)](https://developer.mozilla.org/fr/docs/Mozilla/Add-ons/SDK/Tools/jpm)
