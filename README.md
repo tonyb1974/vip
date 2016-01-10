@@ -91,7 +91,7 @@ Dans le cas où l'installation du noeud [Elasticsearch](https://www.elastic.co/d
 
 > Pour celà, visiter l'adresse **'about:config'** et confirmez votre volonté de modifier les paramètres du navigateur.
 > 
-> Ensuite, sous la clef **'extensions.vip.elastic'**, donner l'adresse http du noeud à interroger. Ex: http://localhost:9200
+> Ensuite, sous la clef **'extensions.vip.elastic'**, donner l'adresse http du noeud à interroger. Ex: **http://localhost:9200**
 
 #Développement
 
@@ -101,6 +101,6 @@ Pour reprendre ce module et augmenter son code:
   2. Installer [NodeJs](https://nodejs.org/en/)
   3. Exécuter la commande **'npm install'**
   4. Modifier le code à l'aide de votre ide préféré (Betbeans, IntelliJ,...)
-  5. Exécuter le projet exécutant un **'jpm run'**
+  5. Exécuter le projet en exécutant un **'jpm run'**
 
 Voir la documentation [Mozilla Developper Network (MDN)](https://developer.mozilla.org/fr/docs/Mozilla/Add-ons/SDK/Tools/jpm)
