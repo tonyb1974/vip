@@ -25,7 +25,7 @@ Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni a
 Pour fonctionner sans se fonder sur le **localStorage** HTML5, les noms de **domaines autorisés** ou **bannis** sont stockés dans un cluster **Elasticsearch**(Moteur de recherche).
 Ce moteur de recherche peut permettre à de nombreuses extensions de partager un stockage externe commun tout en proposant un moteur de recherche local utilisable par les utilisateurs du poste informatique.
 
-- Télécharger l'application *Elasticsearch* (https://www.elastic.co/downloads/elasticsearch)
+- Télécharger l'application [Elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 - Si vous êtes expert, changez la configuration située dans le répertoire **'config/elasticsearch.yml'**
 - Lancez Elasticsearch en mode service (démarrera à chaque lancement du système)
 - Exécuter les requêtes http suivantes à partir de **curl**, **wget**, l'extension firefox **HttpRequester**(https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
@@ -33,24 +33,25 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 
     curl -XPUT http://localhost:9200/domaines -d '{
     "settings": {
- 	"number_of_shards": 3,
- 	"number_of_replicas": 0
-	},
-	"mappings": {
-		"hote": {
-			"properties": {
-				"ip": {
-					"type": "geoip",
-					"store": false
-				},
-				"date": {
-    			"type": "long",
-    			"store": false 
-				},
-				"fuseau": {
-    			"type": "long",
-    			"store": false
-				}
-			}
-		}
-	}
+        "number_of_shards": 3,
+        "number_of_replicas": 0
+    },
+    "mappings": {
+        "hote": {
+                "properties": {
+                       "ip": {
+                                "type": "geoip",
+                                "store": false
+                        },
+                        "date": {
+                                "type": "long",
+                                "store": false 
+                        },
+                        "fuseau": {
+    			        "type": "long",
+    			        "store": false
+                        }
+                }
+        }
+    }
+   
