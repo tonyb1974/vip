@@ -109,7 +109,7 @@ Voir la documentation [Mozilla Developper Network (MDN)](https://developer.mozil
 
 Voici une image qui présente la différence observée lors d'un chargement de la page d'un journal d'information grand public:
 
-[https://github.com/tonyb1974/vip/blob/master/imgs/Avantages-comparatifs.png]
+[Visualisation des avantages comparatifs de l'extension](https://github.com/tonyb1974/vip/blob/master/imgs/Avantages-comparatifs.png)
 
 - En haut, le site chargé avec l'extension active
 - En bas, le site chargé sans extension
