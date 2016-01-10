@@ -31,7 +31,7 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 - Lancez [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) en mode service (démarrera à chaque lancement du système)
 - Exécuter les requêtes http suivantes à partir de [curl](http://man.cx/curl), [wget](http://man.cx/wget), l'extension firefox [HttpRequester](https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
-Installation d'un index de recherche:
+Installation d'un index de recherche des domaines autorisés:
 ```json
 curl -XPUT http://localhost:9200/domaines -d '{
   "settings": {
@@ -57,3 +57,37 @@ curl -XPUT http://localhost:9200/domaines -d '{
     }
   }
 ```
+
+Installation d'un index de recherche des domaines bannis:
+```json
+curl -XPUT http://localhost:9200/domaines_bannis -d '{
+  "settings": {
+    "number_of_shards": 3,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "hote": {
+      "properties": {
+        "ip": {
+          "type": "ip",
+          "store": false
+        },
+        "date": {
+          "type": "long",
+          "store": false
+        },
+        "fuseau": {
+          "type": "long",
+          "store": false
+        }
+      }
+    }
+  }
+```
+
+#Paramètres
+
+Dans le cas où l'installation du noeud Elasticsearch ne puisse être faite sur l'hôte local ou bien si l'on souhaite partager la liste blanche sur plusieurs machines, il est possible d'indiquer un nouveau chemin d'accès au moteur de recherche.
+
+> Pour celà, visiter l'adresse **about:config** et confirmez votre volonté de modifier les paramètres du navigateur.
+> Ensuite, sous la clef **extensions.vip.elastic**, donner l'adresse http du noeud à interroger. Ex: http://localhost:9200
