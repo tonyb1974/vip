@@ -87,7 +87,8 @@ curl -XPUT http://localhost:9200/domaines_bannis -d '{
 
 #Paramètres
 
-Dans le cas où l'installation du noeud Elasticsearch ne puisse être faite sur l'hôte local ou bien si l'on souhaite partager la liste blanche sur plusieurs machines, il est possible d'indiquer un nouveau chemin d'accès au moteur de recherche.
+Dans le cas où l'installation du noeud [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) ne puisse être faite sur l'hôte local ou bien si l'on souhaite partager la liste blanche sur plusieurs machines, il est possible d'indiquer un nouveau chemin d'accès au moteur de recherche.
 
 > Pour celà, visiter l'adresse **about:config** et confirmez votre volonté de modifier les paramètres du navigateur.
+> 
 > Ensuite, sous la clef **extensions.vip.elastic**, donner l'adresse http du noeud à interroger. Ex: http://localhost:9200
