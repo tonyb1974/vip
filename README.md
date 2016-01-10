@@ -1,6 +1,6 @@
 # VIP
 
-Amélioration de la *VIePrivée* des utilisateurs *Firefox* lors de la navigation sur Internet
+Amélioration de la *VIePrivée* des utilisateurs **Firefox** lors de la navigation sur Internet
 
 Cette extension Firefox permet d'éviter la dispersion des données de l'utilisateur sur des domaines dont il n'a pas connaissance lors de connexions invisibles pour lui à différents domaines. Domaines dédiés le plus souvent au tracking ou à la publicité...
 En effet, le plus souvent, les sites commerciaux utilisent le header HTTP *Access-Control-Allow-Origin* avec la valeur '*'.
