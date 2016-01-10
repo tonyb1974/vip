@@ -97,10 +97,10 @@ Dans le cas où l'installation du noeud [Elasticsearch](https://www.elastic.co/d
 
 Pour reprendre ce module et augmenter son code:
 
-  1- CLoner ce repository **Git**
-  2- Installer [NodeJs](https://nodejs.org/en/)
-  3- Exécuter la commande **'npm install'**
-  4- Modifier le code à l'aide de votre ide préféré (Betbeans, IntelliJ,...)
-  5- Exécuter le projet exécutant un **'jpm run'**
+  1. CLoner ce repository **Git**
+  2. Installer [NodeJs](https://nodejs.org/en/)
+  3. Exécuter la commande **'npm install'**
+  4. Modifier le code à l'aide de votre ide préféré (Betbeans, IntelliJ,...)
+  5. Exécuter le projet exécutant un **'jpm run'**
 
 Voir la documentation [Mozilla Developper Network (MDN)](https://developer.mozilla.org/fr/docs/Mozilla/Add-ons/SDK/Tools/jpm)
