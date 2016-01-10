@@ -1,3 +1,5 @@
+#Licence **Creative Commons** (CC BY-NC-ND 3.0 FR)
+
 Vous êtes autorisé à :
 
     Partager — copier, distribuer et communiquer le matériel par tous moyens et sous tous formats
