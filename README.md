@@ -30,9 +30,9 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 - Lancez Elasticsearch en mode service (démarrera à chaque lancement du système)
 - Exécuter les requêtes http suivantes à partir de **curl**, **wget**, l'extension firefox **HttpRequester**(https://addons.mozilla.org/fr/firefox/addon/httprequester/) ou tout autre outil de construction de requêtes http
 
-'''
- curl -XPUT http://localhost:9200/domaines -d '{
- "settings": {
+
+    curl -XPUT http://localhost:9200/domaines -d '{
+    "settings": {
  	"number_of_shards": 3,
  	"number_of_replicas": 0
 	},
@@ -54,4 +54,3 @@ Ce moteur de recherche peut permettre à de nombreuses extensions de partager un
 			}
 		}
 	}
-'''
