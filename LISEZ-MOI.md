@@ -99,7 +99,7 @@ Pour reprendre ce module et augmenter son code:
 
   1. CLoner ce repository **Git**
   2. Installer [NodeJs](https://nodejs.org/en/)
-  3. Exécuter la commande **'npm install'**
+  3. Exécuter la commande **'npm install jpm --global'**
   4. Modifier le code à l'aide de votre ide préféré (Betbeans, IntelliJ,...)
   5. Exécuter le projet en exécutant un **'jpm run'**
 
