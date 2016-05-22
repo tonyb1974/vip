@@ -7,54 +7,224 @@ var notifications = require("sdk/notifications");
 var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
+var sécurisation = require('profilSecurite/securisation');
+var modeSimple = true; //Par défaut, utilises le local Storage plutôt qu'Elasticsearch...
+var jquery = 'jquery-2.2.4.min.js';
 
+const tabs = require("sdk/tabs");
 
-var {Cc, Ci} = require('chrome');
+var {Cc, Ci, Cu} = require('chrome');
 var dnsService = Cc["@mozilla.org/network/dns-service;1"].createInstance(Ci.nsIDNSService);
 var thread = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager).currentThread;
 
-this.prefService = Cc["@mozilla.org/preferences-service;1"]
-    .getService(Ci.nsIPrefService);
-this.prefs = this.prefService
-    .getBranch("extensions.vip.");
-
-try {
-    this.prefs.getCharPref("elastic");
-}
-catch (error) {
-    this.prefs.setCharPref("elastic", "http://127.0.0.1:9200");
-    this.prefService.savePrefFile(null);
-}
-
-var elasticURL = this.prefs.getCharPref("elastic");
-console.log(elasticURL);
-
+var windows = require("sdk/windows").browserWindows;
 
 var context = {
     hoteDemandé: '', //l'hôte principal demandé lors du chargement de la page.
     descriptionHote: '',
     domainesAutorises: [],
-    domainesRefusés: []
+    domainesRefusés: [],
+    urlVisitée: '',
+    idCorrellation: new Date().getTime()
 };
 
-chercherDomaines();
-chercherDomainesBannis();
+// add a listener to the 'open' event
+windows.on('open', function(window) {
+    console.info('New Window');
+});
+windows.on('activate', function(window) {
+    console.info('New activation for Window');
+});
+/*webProgressListener*/
 
-var nouveauDomaine;
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+var myListener = {
+    QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener",
+        "nsISupportsWeakReference"]),
+
+    onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+        console.info('status changed');
+    },
+
+    onLocationChange: function(aProgress, aRequest, aURI, aFlag) {
+        console.info(' =======> Nouvelle URI :', aURI.spec);
+    },
+
+    // For definitions of the remaining functions see related documentation
+    onProgressChange: function(aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {},
+    onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
+    onSecurityChange: function(aWebProgress, aRequest, aState) {}
+}
+
+
+var filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
+    .createInstance(Ci.nsIWebProgress);
+filter.addProgressListener(myListener, Ci.nsIWebProgress.NOTIFY_ALL);
+
+var webProgress = Cc["@mozilla.org/docshell;1"].createInstance(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIWebProgress);
+webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
+console.info('okkkk');
+
+/*fin  webProgressListener*/
+
+//Ecouter l'appel d'une page par l'utilsateur et non par le système de chargement des sous-ressources d'une page...
+function listenerLoad(tab) {
+    if (context.urlVisitée !== tab.url)  {
+        context.urlVisitée = tab.url;
+        context.idCorrellation = new Date().getTime();
+    }
+}
+
+tabs.on('load', function (tab) {
+    listenerLoad(tab);
+});
+tabs.on('ready', function (tab) {
+    listenerLoad(tab);
+});
+tabs.on('open', function (tab) {
+    listenerLoad(tab);
+});
+tabs.on('activate', function (tab) {
+    listenerLoad(tab);
+});
+tabs.on('pageshow', function (tab) {
+    listenerLoad(tab);
+});
+//Fin d'écoute utilisateur
+
+var prefService = Cc["@mozilla.org/preferences-service;1"]
+    .getService(Ci.nsIPrefService);
+var prefs = prefService
+    .getBranch("extensions.vip.");
+
+try {
+    prefs.getCharPref("elastic-url");
+    prefs.getCharPref("regexp_hôtes_acceptés");
+    var hotesAutorises = prefs.getCharPref("hôtes_acceptés");
+    if (hotesAutorises) {
+        context.domainesAutorises = JSON.parse(hotesAutorises).domainesAutorises;
+    }
+}
+catch (error) {
+    prefs.setCharPref("elastic-url", "http://127.0.0.1:9200");
+    prefs.setCharPref("regexp_hôtes_acceptés", "\w*[\:]{0,1}[\/]{0,2}.*googlevideo.com");
+    prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises:[]}));
+    prefService.savePrefFile(null);
+}
+
+var elasticURL = prefs.getCharPref("elastic-url");
+var tropNombreuxHotesGoogle = new RegExp(prefs.getCharPref("regexp_hôtes_acceptés"));
+console.info('Elasticsearch:', elasticURL);
+
+function nestPasUnAppelElastic(request) {
+    var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
+    return (httpChannel.URI.path !== '/requetes/requete' && httpChannel.URI.path !== '/requetes/reponse' && httpChannel.URI.port !== 9200);
+}
+
+//Ecoute des réponses
+function enregistrerReponse(reponse) {
+    if(!modeSimple) {
+        Request({
+            url: elasticURL + "/requetes/reponse",
+            content: JSON.stringify(reponse),
+            contentType: 'application/json',
+            onComplete: function (response) {
+                if (response.status < 200 || response.status >= 300) {
+                    if (response.status !== 409) {
+                        alerteErreurIndexation.show();
+                        console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer la réponse suivante:', reponse);
+                    }
+                }
+            },
+            anonymous: true
+        }).post();
+    }
+}
+
+function TracingListener() {
+    this.originalListener = null;
+    this.receivedData = [];   // array for incoming data.
+}
+
+TracingListener.prototype =
+{
+    onDataAvailable: function (request, context, inputStream, offset, count) {
+
+        /*if (nestPasUnAppelElastic(request) === true ) {
+         console.info('############################### ', request.URI.path);
+         var binaryInputStream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci.nsIBinaryInputStream);
+         var storageStream = Cc["@mozilla.org/storagestream;1"].createInstance(Ci.nsIStorageStream);
+         var binaryOutputStream = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(Ci.nsIBinaryOutputStream);
+
+         binaryInputStream.setInputStream(inputStream);
+         storageStream.init(8192, count, null);
+         binaryOutputStream.setOutputStream(storageStream.getOutputStream(0));
+
+         // Copy received data as they come.
+         var data = binaryInputStream.readBytes(count);
+         console.info(data);
+         this.receivedData.push(data);
+
+         binaryOutputStream.writeBytes(data, count);
+
+         this.originalListener.onDataAvailable(request, context,
+         storageStream.newInputStream(0), offset, count);
+         } else {*/
+        if (!this.startTime) {
+            this.startTime = new Date().getTime();
+        }
+        this.originalListener.onDataAvailable(request, context,
+            inputStream, offset, count);
+
+        /*}*/
+    },
+
+    onStartRequest: function (request, context) {
+        this.originalListener.onStartRequest(request, context);
+    },
+
+    onStopRequest: function (request, contexteRéponse, statusCode) {
+        
+        var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
+        if (nestPasUnAppelElastic(httpChannel) === true && this.startTime /* i.e httpChannel.contentLength > 0*/) {
+            var rep = {
+                date: new Date().getTime(),
+                fuseau: new Date().getTimezoneOffset(),
+                idCorrellation: context.idCorrellation,
+                urlVisitee: context.urlVisitée,
+                methode: httpChannel.requestMethod,
+                hote: getHeader(httpChannel, "host"),
+                port: httpChannel.URI.port,
+                chemin: httpChannel.URI.path,
+                type: httpChannel.contentType,
+                charset: httpChannel.contentCharset || "binaire",
+                taille: httpChannel.contentLength,
+                tps_chargement: (new Date().getTime() - this.startTime),
+                sécurité: httpChannel.securityInfo,
+                status: httpChannel.responseStatus
+            };
+            enregistrerReponse(rep);
+        }
+        this.originalListener.onStopRequest(request, context, statusCode);
+    },
+    QueryInterface: function (aIID) {
+        if (aIID.equals(Ci.nsIStreamListener) ||
+            aIID.equals(Ci.nsISupports)) {
+            return this;
+        }
+        throw Components.results.NS_NOINTERFACE;
+    }
+}
+// Fin écoute réponses
 
 //Définition d'un panneau de recherche et attachement aux touches Alt-C
 var panel = require("sdk/panel").Panel({
     width: 600,
     height: 400,
     contentURL: require("sdk/self").data.url("gestionDomaines.html"),
-    contentScriptFile: data.url("recherche.js")
-});
-
-var ajoutDomaine = require("sdk/panel").Panel({
-    width: 250,
-    height: 150,
-    contentURL: require("sdk/self").data.url("ajoutDomaine.html"),
-    contentScriptFile: data.url("ajoutDomaine.js")
+    contentScriptFile: data.url("gestionDomaines.js")
 });
 
 var alerteDNSVipIntrouvable = require("sdk/panel").Panel({
@@ -79,15 +249,9 @@ var alerteErreurIndexation = require("sdk/panel").Panel({
 });
 
 panel.on("show", function () {
-    //Passe la main au module recherche.js en lui envoyant le message 'show'
+    //Passe la main au module gestionDomaines.js en lui envoyant le message 'show'
     panel.port.emit("show", context.domainesAutorises, context.domainesRefusés);
 });
-
-ajoutDomaine.on("show", function () {
-    //Passe la main au module ajoutDomaine.js en lui envoyant le message 'show' et le nom du domaine à ajouter
-    ajoutDomaine.port.emit("show", nouveauDomaine);
-});
-
 
 alerteDNSVipIntrouvable.on("show", function () {
     //Passe la main au module alerteVipBackend.js en lui envoyant le message 'show'
@@ -107,9 +271,37 @@ alerteErreurIndexation.on("show", function () {
 var showHotKey = Hotkey({
     combo: 'alt-c',
     onPress: function () {
+        console.info('Alt-C');
         panel.show();
     }
 });
+
+pageMod.PageMod({
+    include: "*",
+    contentScriptFile: [data.url('filtre.js'), data.url(jquery)],
+    contentScriptWhen: "ready",
+    onAttach: function (worker) {
+        worker.port.emit("nettoyer", worker.url);
+        console.info(worker.url);
+        worker.port.on("hoteDemandé", function (hoteDemandé) {
+            context.hoteDemandé = hoteDemandé;
+        });
+    }
+});
+
+pageMod.PageMod({
+    include: ["*"],
+    contentScriptWhen: "start",
+    attachTo: ["existing", "top"],
+    onAttach: function onAttach(worker) {
+        listenerLoad(worker.tab);
+        console.info('tab.url:', worker.tab.url);
+    }
+});
+
+chercherDomaines();
+chercherDomainesBannis();
+sécurisation.navigationPrivee();
 
 function getHeader(channel, header) {
     try {
@@ -144,19 +336,24 @@ function corps(httpChannel) {
 
 function listener(event) {
     var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-    context.descriptionHote = channel.URI.host;
-    var trouve = false;
-    var ip = channel.URI.host; //Pour localhost, 127.0.0.1 ou 192.168.*, ip aura la valeur du host
 
-    if (patronLocalhost1.exec(channel.URI.host) || patronLocalhost2.exec(channel.URI.host) || patronReseauLocal.exec(channel.URI.host)) {
+    if (patronLocalhost1.exec(channel.URI.host) ||
+        patronLocalhost2.exec(channel.URI.host) ||
+        patronReseauLocal.exec(channel.URI.host) ||
+        tropNombreuxHotesGoogle.exec(channel.URI.host)) {
+        //On installe un écouteur
+        var newListener = new TracingListener();
+        event.subject.QueryInterface(Ci.nsITraceableChannel);
+        newListener.originalListener = event.subject.setNewListener(newListener);
         accepter(channel);
         return;
     } else {
-        //console.log('Hôte demandé: ' + channel.URI.host);
         for (var cpt in context.domainesAutorises) {
             var expressionRegulière = new RegExp("\w*[\:]{0,1}[\/]{0,2}" + context.domainesAutorises[cpt]._id);
             if (expressionRegulière.exec(channel.URI.host)) {
-                ip = context.domainesAutorises[cpt]._source.ip;
+                var newListener = new TracingListener();
+                event.subject.QueryInterface(Ci.nsITraceableChannel);
+                newListener.originalListener = event.subject.setNewListener(newListener);
                 accepter(channel);
                 return;
             }
@@ -166,12 +363,12 @@ function listener(event) {
 }
 
 function accepter(channel) {
+    journaliserRequête(channel, true);
+
     //Dans tous les cas, nous ne donnons pas notre user agent.
     channel.setRequestHeader("User-Agent", new Date().getTime(), false);
     channel.setRequestHeader("Referer", "", false);
     channel.setRequestHeader("Host", channel.URI.host, false);
-
-    journaliserRequête(channel, 'Accès');
 }
 
 function bloquer(channel) {
@@ -188,52 +385,63 @@ function bloquer(channel) {
         enregistrerNouveauDomaineRefusé(context.descriptionHote);
         notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-C pour autoriser ou refuser de nouveaux domaines.'});
     }
-    journaliserRequête(channel, 'Refus');
+
+    //Pour éviter de journaliser le user-agent
+    channel.setRequestHeader("User-Agent", 0, false);
+    journaliserRequête(channel, false);
 }
 
 function journaliserRequête(channel, status) {
-    var request = {
-        date: new Date().getTime(),
-        fuseau: new Date().getTimezoneOffset(),
-        format: channel.URI.scheme,
-        sécurité: channel.URI.securityInfo,
-        methode: channel.requestMethod,
-        hote: getHeader(channel, "host"),
-        port: channel.URI.port,
-        chemin: channel.URI.path,
-        corps: corps(channel),
-        referer: channel.referer,
-        mode: channel.mode,
-        contexte: channel.context,
-        taille: getHeader(channel, "Content-Length"),
-        type: getHeader(channel, "Content-Type"),
-        md5: getHeader(channel, "Content-MD5"),
-        agent: getHeader(channel, "User-Agent"),
-        utilisateur: getHeader(channel, "username"),
-        de: getHeader(channel, "From"),
-        auth: getHeader(channel, "Authorization"),
-        proxyAuth: getHeader(channel, "Proxy-Authorization"),
-        origine: getHeader(channel, "Origin"),
-        via: getHeader(channel, "Via"),
-        status: status
-    }
-    //console.log(request);
-}
+    if (!modeSimple && nestPasUnAppelElastic(channel) === true) {
+        var requête = {
+            date: new Date().getTime(),
+            fuseau: new Date().getTimezoneOffset(),
+            idCorrellation: context.idCorrellation,
+            urlVisitee: context.urlVisitée,
+            format: channel.URI.scheme,
+            sécurité: channel.URI.securityInfo,
+            methode: channel.requestMethod,
+            hote: getHeader(channel, "host"),
+            port: channel.URI.port,
+            chemin: channel.URI.path,
+            corps: corps(channel),
+            referer: channel.referer,
+            mode: channel.mode,
+            contexte: channel.context,
+            taille: Number(getHeader(channel, "Content-Length")) || -1,
+            type: getHeader(channel, "Content-Type"),
+            md5: getHeader(channel, "Content-MD5"),
+            utilisateur: getHeader(channel, "username"),
+            de: getHeader(channel, "From"),
+            auth: getHeader(channel, "Authorization"),
+            proxyAuth: getHeader(channel, "Proxy-Authorization"),
+            origine: getHeader(channel, "Origin"),
+            via: getHeader(channel, "Via"),
+            accès: status
+        };
+        Request({
+            url: elasticURL + "/requetes/requete",
+            content: JSON.stringify(requête),
+            contentType: 'application/json',
+            onComplete: function (response) {
+                if (response.status < 200 || response.status >= 300) {
+                    if (response.status !== 409) {
+                        alerteErreurIndexation.show();
+                        console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer la requete:', requête);
+                    }
+                    return;
 
+                }
+            },
+            anonymous: true
+        }).post();
+    }
+}
 events.on("http-on-modify-request", listener);
 
 //Le bouton de fermeture du panneau de gestion des domaines a été clické
 panel.port.on("panelClosed", function () {
     panel.hide();
-});
-
-ajoutDomaine.port.on("ajoutAnnule", function () {
-    ajoutDomaine.hide();
-});
-
-ajoutDomaine.port.on("confirmationAjout", function (domaine) {
-    console.log('Ajout du domaine: ' + domaine);
-    ajoutDomaine.hide();
 });
 
 alerteDNSVipIntrouvable.port.on("alerteVipBackendFermé", function () {
@@ -249,99 +457,122 @@ alerteErreurIndexation.port.on("alerteErreurIndexationFermé", function () {
 });
 
 function chercherDomaines() {
-    var recherche = {
-        query: {
-            match_all: {}
-        },
-        size: 10000
-    };
-    Request({
-        url: elasticURL + "/domaines/_search", //A FAIRE: Remplacer par un paramètre
-        content: JSON.stringify(recherche),
-        contentType: 'application/json',
-        onComplete: function (response) {
-            if (response.status < 200 || response.status >= 300) {
-                alerteDNSVipIntrouvable.show();
-                console.log('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
-                return;
-            }
-            var result = response.json;
-            if (result && result.hits) {
-                context.domainesAutorises = result.hits.hits;
-            }
-            panel.hide();
-        },
-        anonymous: true
-    }).post();
+
+    if (!modeSimple)
+    {
+        var recherche = {
+            query: {
+                match_all: {}
+            },
+            size: 10000
+        };
+        Request({
+            url: elasticURL + "/domaines/_search", //A FAIRE: Remplacer par un paramètre
+            content: JSON.stringify(recherche),
+            contentType: 'application/json',
+            onComplete: function (response) {
+                if (response.status < 200 || response.status >= 300) {
+                    alerteDNSVipIntrouvable.show();
+                    console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
+                    return;
+                }
+                var result = response.json;
+                if (result && result.hits) {
+                    context.domainesAutorises = result.hits.hits;
+                }
+                panel.hide();
+            },
+            anonymous: true
+        }).post();
+    } else {
+        var hotesAutorises = prefs.getCharPref("hôtes_acceptés");
+        if (hotesAutorises) {
+            context.domainesAutorises = JSON.parse(hotesAutorises).domainesAutorises;
+        }
+    }
 }
 
 function chercherDomainesBannis() {
-    var recherche = {
-        query: {
-            match_all: {}
-        },
-        size: 10000
-    };
-    Request({
-        url: elasticURL + "/domaines_bannis/_search", //A FAIRE: Remplacer par un paramètre
-        content: JSON.stringify(recherche),
-        contentType: 'application/json',
-        onComplete: function (response) {
-            if (response.status < 200 || response.status >= 300) {
-                alerteDNSVipIntrouvable.show();
-                console.log('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
-                return;
-            }
-            var result = response.json;
-            if (result && result.hits) {
-                context.domainesRefusés = result.hits.hits;
-            }
-            panel.hide();
-        },
-        anonymous: true
-    }).post();
+    if (!modeSimple)
+    {
+        var recherche = {
+            query: {
+                match_all: {}
+            },
+            size: 10000
+        };
+        Request({
+            url: elasticURL + "/domaines_bannis/_search", //A FAIRE: Remplacer par un paramètre
+            content: JSON.stringify(recherche),
+            contentType: 'application/json',
+            onComplete: function (response) {
+                if (response.status < 200 || response.status >= 300) {
+                    alerteDNSVipIntrouvable.show();
+                    console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
+                    return;
+                }
+                var result = response.json;
+                if (result && result.hits) {
+                    context.domainesRefusés = result.hits.hits;
+                }
+                panel.hide();
+            },
+            anonymous: true
+        }).post();
+    }
 }
 
 function enregistrerNouveauDomaine(hote, ip) {
-    var documentHote = {
-        date: new Date().getTime(),
-        fuseau: new Date().getTimezoneOffset(),
-        ip: ip
-    };
-    Request({
-        url: elasticURL + "/domaines/hote/" + hote + '?op_type=create',
-        content: JSON.stringify(documentHote),
-        contentType: 'application/json',
-        onComplete: function (response) {
-            console.log("Enregistrement hôte autorisé...", hote);
-            if (response.status < 200 || response.status >= 300) {
-                if (response.status !== 409) {
-                    alerteErreurIndexation.show();
-                    console.log('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine suivant:', hote, 'ip=', ip);
-                } else {
-                    console.log('Document déjà autorisé:', hote);
-                }
-                return;
 
-            } else {
-                console.log("Enregistrement ok !");
-                context.domainesAutorises.push({_id: hote,_source: {ip: ip}});
-                var indexSuppression;
-                for (var domaineIndex in context.domainesRefusés) {
-                    if (context.domainesRefusés[domaineIndex]._id === hote) {
-                        context.domainesRefusés.splice(domaineIndex, 1);
-                        break;
+    if (modeSimple) {
+        var domaine = {_id: hote, _source: {ip: ip}};
+        context.domainesAutorises.push(domaine);
+        for (var domaineIndex in context.domainesRefusés) {
+            if (context.domainesRefusés[domaineIndex]._id === hote) {
+                context.domainesRefusés.splice(domaineIndex, 1);
+                break;
+            }
+        }
+    } else {
+        var documentHote = {
+            date: new Date().getTime(),
+            fuseau: new Date().getTimezoneOffset(),
+            ip: ip
+        };
+        Request({
+            url: elasticURL + "/domaines/hote/" + hote + '?op_type=create',
+            content: JSON.stringify(documentHote),
+            contentType: 'application/json',
+            onComplete: function (response) {
+                console.info("Enregistrement hôte autorisé...", hote);
+                if (response.status < 200 || response.status >= 300) {
+                    if (response.status !== 409) {
+                        alerteErreurIndexation.show();
+                        console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine suivant:', hote, 'ip=', ip);
+                    } else {
+                        console.info('Document déjà autorisé:', hote);
+                    }
+                    return;
+
+                } else {
+                    console.info("Enregistrement ok !");
+                    context.domainesAutorises.push({_id: hote, _source: {ip: ip}});
+                    for (var domaineIndex in context.domainesRefusés) {
+                        if (context.domainesRefusés[domaineIndex]._id === hote) {
+                            context.domainesRefusés.splice(domaineIndex, 1);
+                            break;
+                        }
                     }
                 }
-            }
-        },
-        anonymous: true
-    }).post();
+            },
+            anonymous: true
+        }).post();
+    }
 }
 
 //Le champ de recherche du panneau de gestion des domaines contient un nouveau texte
 panel.port.on("hoteAjouté", function (hote, ip) {
-    console.log('Recherche en cours... == >' + hote);
+    console.info('Recherche en cours... == >' + hote);
 
     var ecouteurDNS = {
         onLookupComplete: function (request, record, status) {
@@ -355,20 +586,27 @@ panel.port.on("hoteAjouté", function (hote, ip) {
                 return;
             }
 
-            //Supprime le domaine bannis avant d'ajouter aux hôtes autorisés
-            Request({
-                url: elasticURL + "/domaines_bannis/hote/" + hote,
-                contentType: 'application/json',
-                onComplete: function (response) {
-                    console.log("Suppression hôte banni...");
-                    if (response.status !== 404 && (response.status < 200 || response.status >= 300)) {
-                        //Echoue silencieusement
-                    }
-                    console.log("Suppression hôte banni ok !");
-                    enregistrerNouveauDomaine(hote, record.getNextAddrAsString());
-                },
-                anonymous: true
-            }).delete();
+            if (modeSimple) {
+                enregistrerNouveauDomaine(hote, record.getNextAddrAsString());
+                prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: context.domainesAutorises}));
+                prefService.savePrefFile(null);
+            } else {
+
+                //Supprime le domaine bannis avant d'ajouter aux hôtes autorisés
+                Request({
+                    url: elasticURL + "/domaines_bannis/hote/" + hote,
+                    contentType: 'application/json',
+                    onComplete: function (response) {
+                        console.info("Suppression hôte banni...");
+                        if (response.status !== 404 && (response.status < 200 || response.status >= 300)) {
+                            //Echoue silencieusement
+                        }
+                        console.info("Suppression hôte banni ok !");
+                        enregistrerNouveauDomaine(hote, record.getNextAddrAsString());
+                    },
+                    anonymous: true
+                }).delete();
+            }
         }
     };
     dnsService.asyncResolve(hote, 0, ecouteurDNS, thread);
@@ -376,32 +614,38 @@ panel.port.on("hoteAjouté", function (hote, ip) {
 
 
 function enregistrerNouveauDomaineRefusé(hote, ip) {
-    var documentHote = {
-        date: new Date().getTime(),
-        fuseau: new Date().getTimezoneOffset(),
-        ip: ip || '0.0.0.0'
-    };
-    Request({
-        url: elasticURL + "/domaines_bannis/hote/" + hote + '?op_type=create',
-        content: JSON.stringify(documentHote),
-        contentType: 'application/json',
-        onComplete: function (response) {
-            console.log("Enregistrement hôte banni...", hote);
-            if (response.status < 200 || response.status >= 300) {
-                if (response.status !== 409) {
-                    alerteErreurIndexation.show();
-                    console.log('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine banni suivant:', hote, 'ip:', ip);
+
+    if (modeSimple) {
+        var domaine = {_id: hote, _source: {ip: ip}};
+        context.domainesRefusés.push(domaine);
+    } else {
+        var documentHote = {
+            date: new Date().getTime(),
+            fuseau: new Date().getTimezoneOffset(),
+            ip: ip || '0.0.0.0'
+        };
+        Request({
+            url: elasticURL + "/domaines_bannis/hote/" + hote + '?op_type=create',
+            content: JSON.stringify(documentHote),
+            contentType: 'application/json',
+            onComplete: function (response) {
+                console.info("Enregistrement hôte banni...", hote);
+                if (response.status < 200 || response.status >= 300) {
+                    if (response.status !== 409) {
+                        alerteErreurIndexation.show();
+                        console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine banni suivant:', hote, 'ip:', ip);
+                    } else {
+                        console.error('Document déjà banni:', hote);
+                    }
+                    return;
                 } else {
-                    console.log('Document déjà banni:', hote);
+                    console.info("Enregistrement hôte banni ok !");
+                    context.domainesRefusés.push({_id: hote, _source: {ip: ip}});
                 }
-                return;
-            } else {
-                console.log("Enregistrement hôte banni ok !");
-                context.domainesRefusés.push({_id: hote, _source: {ip: ip}});
-            }
-        },
-        anonymous: true
-    }).post();
+            },
+            anonymous: true
+        }).post();
+    }
 }
 
 panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
@@ -409,35 +653,32 @@ panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
     for (var domaineIndex in context.domainesAutorises) {
         if (context.domainesAutorises[domaineIndex]._id === hoteSupprimé) {
             var indexSauvegardé = domaineIndex;
-            Request({
-                url: elasticURL + "/domaines/hote/" + hoteSupprimé,
-                contentType: 'application/json',
-                onComplete: function (response) {
-                    console.log("Suppression...", hoteSupprimé);
-                    if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
-                        alerteErreurIndexation.show();
-                        console.log('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
-                        return;
-                    } else {
-                        console.log("Suppression ok !");
-                        enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
-                        context.domainesAutorises.splice(indexSauvegardé, 1);
-                    }
-                },
-                anonymous: true
-            }).delete();
+            if (modeSimple) {
+                enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
+                context.domainesAutorises.splice(indexSauvegardé, 1);
+                prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: context.domainesAutorises}));
+                prefService.savePrefFile(null);
+            } else {
+                Request({
+                    url: elasticURL + "/domaines/hote/" + hoteSupprimé,
+                    contentType: 'application/json',
+                    onComplete: function (response) {
+                        console.info("Suppression...", hoteSupprimé);
+                        if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
+                            alerteErreurIndexation.show();
+                            console.error('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
+                            return;
+                        } else {
+                            console.info("Suppression ok !");
+                            enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
+                            context.domainesAutorises.splice(indexSauvegardé, 1);
+                        }
+                    },
+                    anonymous: true
+                }).delete();
+            }
         }
     }
 });
 
-pageMod.PageMod({
-    include: "*",
-    contentScriptFile: [data.url('essentiel.js'), data.url('jquery-1.10.2.min.js')],
-    contentScriptWhen: "ready",
-    onAttach: function (worker) {
-        worker.postMessage("nettoyer", worker.url);
-        worker.port.on("hoteDemandé", function (hoteDemandé) {
-            context.hoteDemandé = hoteDemandé;
-        });
-    }
-});
+

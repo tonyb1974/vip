@@ -9,11 +9,17 @@ boutonFermer.addEventListener('click', function (event) {
     self.port.emit("panelClosed");
 }, false);
 
+champRecherche.addEventListener('keyup', function (event) {
+    console.log(champRecherche.value);
+    $('#recherche').innerHTML = champRecherche.value;
+}, false);
+
 function créerNoeudAjout(parentNode, hoteReprésenté, ipReprésentée) {
     var div = document.createElement('div');
     div.setAttribute('id', hoteReprésenté);
 
     var input = document.createElement('input');
+    input.setAttribute('class', 'ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only');
     input.setAttribute('type', 'button');
     input.setAttribute('value', '+');
     input.setAttribute('onclick', "document.getElementById(\'rechercheDomaines\').value=\'" + hoteReprésenté + "\';document.getElementById(\'ajouter\').click();");
@@ -52,6 +58,7 @@ function créerNoeudSuppression(parentNode, hoteReprésenté, ipReprésentée) {
     div.setAttribute('id', hoteReprésenté);
 
     var input = document.createElement('input');
+    input.setAttribute('class', 'ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only');
     input.setAttribute('type', 'button');
     input.setAttribute('value', '-');
     input.setAttribute('onclick', "document.getElementById(\'rechercheDomaines\').value=\'" + hoteReprésenté + "\';document.getElementById(\'supprimer\').click();");

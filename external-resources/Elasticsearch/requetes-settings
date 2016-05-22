@@ -1,0 +1,165 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "analyse_chemin": {
+          "type": "custom",
+          "tokenizer": "path_hierarchy",
+          "filter": [],
+          "char_filter": []
+        }
+      }
+    }
+  },
+  "mappings": {
+    "requete": {
+      "properties": {
+        "date": {
+          "type": "date",
+          "format": "epoch_millis"
+        },
+        "fuseau": {
+          "type": "long"
+        },
+        "idCorrellation": {
+          "type": "long"
+        },
+        "urlVisitee": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "format": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "sécurité": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "methode": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "hote": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "port": {
+          "type": "long"
+        },
+        "chemin": {
+          "type": "string",
+          "analyzer": "analyse_chemin",
+          "search_analyzer": "keyword"
+        },
+        "corps": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "referer": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "mode": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "contexte": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "taille": {
+          "type": "long"
+        },
+        "type": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "md5": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "utilisateur": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "de": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "auth": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "proxyAuth": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "origine": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "via": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "accès": {
+          "type": "string",
+          "index": "not_analyzed"
+        }
+      }
+    },
+    "reponse": {
+      "properties": {
+        "date": {
+          "type": "date",
+          "format": "epoch_millis"
+        },
+        "fuseau": {
+          "type": "long"
+        },
+        "idCorrellation": {
+          "type": "long"
+        },
+        "urlVisitee": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "sécurité": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "methode": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "hote": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "port": {
+          "type": "long"
+        },
+        "chemin": {
+          "type": "string",
+          "analyzer": "analyse_chemin",
+          "search_analyzer": "keyword"
+        },
+        "taille": {
+          "type": "long"
+        },
+        "tps_chargement": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "type": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "status": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}

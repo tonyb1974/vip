@@ -1,16 +1,47 @@
 <!DOCTYPE html>
-<head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"></head>
-<body>
-<h2>Rechercher ou ajouter un domaine ...</h2>
-<div>
-<input id="rechercheDomaines" type="text" tabindex="1" style="width:84%"/> <input id="ajouter" value="+" type="button"/> <input id="supprimer" value="-" type="button"/>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link href="jquery-ui-1.11.4/jquery-ui.css" rel="stylesheet">
+    <script src="jquery-ui-1.11.4/jquery-ui.js"></script>
+</head>
+<body class="ui-corner-all">
+<div class="datepicker" style="width:98%">
+    <h1 class="ui-datepicker-title ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all">Rechercher ou
+        ajouter un domaine ...</h1>
+    <div>
+        <input id="rechercheDomaines" type="text" tabindex="1" style="width:84%" class="ui-autocomplete-input"/>
+        <input id="ajouter" value="+" type="button"
+               class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"/>
+        <input id="supprimer" value="-" type="button"
+               class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"/>
+        <p id='recherche'></p>
+    </div>
+    <br>
+    <div role="tablist" class="ui-accordion ui-widget ui-helper-reset" id="accordion">
+        <h3 tabindex="0" aria-expanded="false" aria-selected="true" aria-controls="domainesAcceptés"
+            id="titreDomainesAcceptés" role="tab"
+            class="ui-accordion-header ui-state-default ui-accordion-icons ui-accordion-header-active ui-state-active ui-corner-top">
+            Domaines actuellement acceptés</h3>
+        <div id="domainesAcceptés" aria-labelledby="titreDomainesAcceptés" aria-hidden="false" role="tabpanel"
+             class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active">
+        </div>
+    </div>
+    <div role="tablist" class="ui-accordion ui-widget ui-helper-reset" id="accordion2">
+        <h3 tabindex="0" aria-expanded="false" aria-selected="true" aria-controls="domainesRefusés"
+            id="titreDomainesRefusés" role="tab"
+            class="ui-accordion-header ui-state-default ui-accordion-icons ui-accordion-header-active ui-state-active ui-corner-top">
+            Domaines actuellement refusés</h3>
+        <div id="domainesRefusés" aria-labelledby="titreDomainesRefusés" aria-hidden="false" role="tabpanel"
+             class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active">
+        </div>
+        <input id="fermer" value="Fermer" type="button" style="margin: 10px 2px"
+               class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only"/>
+    </div>
 </div>
-<br>
-<h3>Domaines actuellement acceptés</h3>
-<div id="domainesAcceptés">
-</div>
-<h3>Domaines actuellement refusés</h3>
-<div id="domainesRefusés">
-</div>
-<input id="fermer" value="Fermer" type="button"/>
+<script>
+
+    $("#accordion").accordion();
+    $( "#tabs" ).tabs();
+    $( "#button" ).button();
+</script>
 </body></html>
