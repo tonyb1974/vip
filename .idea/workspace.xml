@@ -2,45 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="07bf2e76-cae5-419b-bcb4-637f4499b63d" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_diagonals-thick_18_b81900_40x40.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_diagonals-thick_20_666666_40x40.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_flat_10_000000_40x100.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_glass_100_f6f6f6_1x400.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_glass_100_fdf5ce_1x400.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_glass_65_ffffff_1x400.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_gloss-wave_35_f6a828_500x100.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_highlight-soft_100_eeeeee_1x100.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-bg_highlight-soft_75_ffe45c_1x100.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-icons_222222_256x240.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-icons_228ef1_256x240.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-icons_ef8c08_256x240.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-icons_ffd27a_256x240.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/images/ui-icons_ffffff_256x240.png" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/jsLibraryMappings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/filtre.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-2.2.4.min.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/external/jquery/jquery.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/index.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.min.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.min.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.structure.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.structure.min.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.theme.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/data/jquery-ui-1.11.4/jquery-ui.theme.min.css" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/external-resources/Elasticsearch/requetes-settings" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/external-resources/Securite/prefs.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/external-resources/Securite/user.js" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/profilSecurite/securisation.js" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/ajoutDomaine.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/ajoutDomaine.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/essentiel.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/jquery-1.10.2.min.js" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/data/recherche.js" afterPath="$PROJECT_DIR$/data/gestionDomaines.js" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/imgs/Avantages-comparatifs.png" afterPath="$PROJECT_DIR$/external-resources/docs/Avantages-comparatifs.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/gestionDomaines.html" afterPath="$PROJECT_DIR$/data/gestionDomaines.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/entree.js" afterPath="$PROJECT_DIR$/entree.js" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/gradle.xml" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/vip-dev.sh" afterPath="$PROJECT_DIR$/vip-dev.sh" />
     </list>
     <ignored path="vip.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -153,11 +116,21 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="securisation.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="securisation.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/profilSecurite/securisation.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="54">
               <caret line="3" column="35" selection-start-line="3" selection-start-column="35" selection-end-line="3" selection-end-column="35" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="vip-dev.sh" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/vip-dev.sh">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="36">
+              <caret line="2" column="60" selection-start-line="2" selection-start-column="60" selection-end-line="2" selection-end-column="60" />
               <folding />
             </state>
           </provider>
@@ -240,6 +213,7 @@
         <option value="$PROJECT_DIR$/entree.js" />
         <option value="$PROJECT_DIR$/external-resources/Sécurité/prefs.js" />
         <option value="$PROJECT_DIR$/profilSecurite/securisation.js" />
+        <option value="$PROJECT_DIR$/vip-dev.sh" />
       </list>
     </option>
   </component>
@@ -387,8 +361,8 @@
         </subPane>
       </pane>
       <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="PackagesPane" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -764,12 +738,12 @@
       <workItem from="1463643496338" duration="534000" />
       <workItem from="1463838458338" duration="23416000" />
       <workItem from="1463906367794" duration="8036000" />
-      <workItem from="1463943733429" duration="5162000" />
+      <workItem from="1463943733429" duration="5626000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="70963000" />
+    <option name="totallyTimeSpent" value="71427000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="25" width="1888" height="1055" extended-state="4" />
@@ -821,7 +795,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/data/ajoutDomaine.js" />
     <entry file="file://$PROJECT_DIR$/entree.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1077,7 +1050,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="65" selection-start-line="0" selection-start-column="65" selection-end-line="0" selection-end-column="65" />
           <folding>
-            <element signature="n#!!doc" expanded="true" />
+            <element signature="n#!!doc" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1187,6 +1160,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="54">
           <caret line="3" column="35" selection-start-line="3" selection-start-column="35" selection-end-line="3" selection-end-column="35" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vip-dev.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="36">
+          <caret line="2" column="60" selection-start-line="2" selection-start-column="60" selection-end-line="2" selection-end-column="60" />
           <folding />
         </state>
       </provider>
