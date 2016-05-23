@@ -9,6 +9,7 @@ var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var sécurisation = require('profilSecurite/securisation');
 var modeSimple = true; //Par défaut, utilises le local Storage plutôt qu'Elasticsearch...
+var filtreActif = true //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
 var jquery = 'jquery-2.2.4.min.js';
 
 const tabs = require("sdk/tabs");
@@ -221,10 +222,10 @@ TracingListener.prototype =
 
 //Définition d'un panneau de recherche et attachement aux touches Alt-C
 var panel = require("sdk/panel").Panel({
-    width: 600,
-    height: 400,
+    width: 500,
+    height: 700,
     contentURL: require("sdk/self").data.url("gestionDomaines.html"),
-    contentScriptFile: data.url("gestionDomaines.js")
+    contentScriptFile: [data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'),data.url('gestionDomaines.js')]
 });
 
 var alerteDNSVipIntrouvable = require("sdk/panel").Panel({
@@ -273,6 +274,21 @@ var showHotKey = Hotkey({
     onPress: function () {
         console.info('Alt-C');
         panel.show();
+    }
+});
+
+var showHotKey = Hotkey({
+    combo: 'alt-o',
+    onPress: function () {
+        if (filtreActif) {
+            console.info('Alt-O: Désactivation du filtrage');
+            notifications.notify({text: 'Filtrage désactivé\n\nAppuyez sur Alt-O pour réactiver le filtrage des sites.'});
+            filtreActif = false;
+        } else {
+            console.info('Alt-O: Activation du filtrage');
+            notifications.notify({text: 'Filtrage activé\n\nAppuyez sur Alt-O pour désactiver le filtrage des sites.'});
+            filtreActif = true;
+        }
     }
 });
 
@@ -335,31 +351,33 @@ function corps(httpChannel) {
 }
 
 function listener(event) {
-    var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
+    if (filtreActif) {
+        var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
 
-    if (patronLocalhost1.exec(channel.URI.host) ||
-        patronLocalhost2.exec(channel.URI.host) ||
-        patronReseauLocal.exec(channel.URI.host) ||
-        tropNombreuxHotesGoogle.exec(channel.URI.host)) {
-        //On installe un écouteur
-        var newListener = new TracingListener();
-        event.subject.QueryInterface(Ci.nsITraceableChannel);
-        newListener.originalListener = event.subject.setNewListener(newListener);
-        accepter(channel);
-        return;
-    } else {
-        for (var cpt in context.domainesAutorises) {
-            var expressionRegulière = new RegExp("\w*[\:]{0,1}[\/]{0,2}" + context.domainesAutorises[cpt]._id);
-            if (expressionRegulière.exec(channel.URI.host)) {
-                var newListener = new TracingListener();
-                event.subject.QueryInterface(Ci.nsITraceableChannel);
-                newListener.originalListener = event.subject.setNewListener(newListener);
-                accepter(channel);
-                return;
+        if (patronLocalhost1.exec(channel.URI.host) ||
+            patronLocalhost2.exec(channel.URI.host) ||
+            patronReseauLocal.exec(channel.URI.host) ||
+            tropNombreuxHotesGoogle.exec(channel.URI.host)) {
+            //On installe un écouteur
+            var newListener = new TracingListener();
+            event.subject.QueryInterface(Ci.nsITraceableChannel);
+            newListener.originalListener = event.subject.setNewListener(newListener);
+            accepter(channel);
+            return;
+        } else {
+            for (var cpt in context.domainesAutorises) {
+                var expressionRegulière = new RegExp("\w*[\:]{0,1}[\/]{0,2}" + context.domainesAutorises[cpt]._id);
+                if (expressionRegulière.exec(channel.URI.host)) {
+                    var newListener = new TracingListener();
+                    event.subject.QueryInterface(Ci.nsITraceableChannel);
+                    newListener.originalListener = event.subject.setNewListener(newListener);
+                    accepter(channel);
+                    return;
+                }
             }
         }
+        bloquer(channel);
     }
-    bloquer(channel);
 }
 
 function accepter(channel) {
@@ -383,7 +401,7 @@ function bloquer(channel) {
     if (trouve === false) {
         context.descriptionHote = channel.URI.host;
         enregistrerNouveauDomaineRefusé(context.descriptionHote);
-        notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-C pour autoriser ou refuser de nouveaux domaines.'});
+        notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-C pour autoriser ou refuser de nouveaux domaines.\n\nAppuyez sur Alt-O pour activer ou désactiver le filtrage des sites.'});
     }
 
     //Pour éviter de journaliser le user-agent

@@ -4,14 +4,10 @@ var listeDomainesRefusés = document.getElementById("domainesRefusés");
 var ajouterDomaine = document.getElementById("ajouter");
 var supprimerDomaine = document.getElementById("supprimer");
 var boutonFermer = document.getElementById("fermer");
+var suggestions = [];
 
 boutonFermer.addEventListener('click', function (event) {
     self.port.emit("panelClosed");
-}, false);
-
-champRecherche.addEventListener('keyup', function (event) {
-    console.log(champRecherche.value);
-    $('#recherche').innerHTML = champRecherche.value;
 }, false);
 
 function créerNoeudAjout(parentNode, hoteReprésenté, ipReprésentée) {
@@ -19,14 +15,14 @@ function créerNoeudAjout(parentNode, hoteReprésenté, ipReprésentée) {
     div.setAttribute('id', hoteReprésenté);
 
     var input = document.createElement('input');
-    input.setAttribute('class', 'ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only');
     input.setAttribute('type', 'button');
     input.setAttribute('value', '+');
+    input.setAttribute('id', hoteReprésenté+'_bouton')
     input.setAttribute('onclick', "document.getElementById(\'rechercheDomaines\').value=\'" + hoteReprésenté + "\';document.getElementById(\'ajouter\').click();");
-
+    $(input).button();
+    
     div.appendChild(input);
     div.appendChild(document.createTextNode(' ' + hoteReprésenté));
-
     if (ipReprésentée && ipReprésentée !== '0.0.0.0') {
         var ip = document.createElement('span');
         ip.setAttribute('id', hoteReprésenté + '_ip');
@@ -58,10 +54,11 @@ function créerNoeudSuppression(parentNode, hoteReprésenté, ipReprésentée) {
     div.setAttribute('id', hoteReprésenté);
 
     var input = document.createElement('input');
-    input.setAttribute('class', 'ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only');
     input.setAttribute('type', 'button');
     input.setAttribute('value', '-');
+    input.setAttribute('id',hoteReprésenté+'_bouton');
     input.setAttribute('onclick', "document.getElementById(\'rechercheDomaines\').value=\'" + hoteReprésenté + "\';document.getElementById(\'supprimer\').click();");
+    $(input).button();
 
     div.appendChild(input);
     div.appendChild(document.createTextNode(' ' + hoteReprésenté));
@@ -107,14 +104,29 @@ self.port.on("show", function (domainesAcceptés, domainesBannis) {
         champRecherche.value = 'www.';
     }
     champRecherche.setSelectionRange(0, champRecherche.value.length);
-
+    
+    //init suggestions
+    suggestions = [];
     nettoyerLesListes();
     for (var indexDomaine in domainesAcceptés) {
         créerNoeudSuppression(listeDomainesAcceptés, domainesAcceptés[indexDomaine]._id, domainesAcceptés[indexDomaine]._source.ip);
+        suggestions.push(domainesAcceptés[indexDomaine]._id);
+        
     }
     for (var indexDomaineBanni in domainesBannis) {
         créerNoeudAjout(listeDomainesRefusés, domainesBannis[indexDomaineBanni]._id, domainesBannis[indexDomaineBanni]._source.ip);
+        suggestions.push(domainesBannis[indexDomaineBanni]._id);
     }
+
+    $('#ajouter').button();
+    $('#supprimer').button();
+    $("#accordion").accordion({
+        heightStyle: "content"
+    });
+    $("#fermer").button();
+    $("#rechercheDomaines").autocomplete({
+        source: suggestions
+    });
     champRecherche.focus();
 });
 
