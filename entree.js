@@ -232,21 +232,21 @@ var alerteDNSVipIntrouvable = require("sdk/panel").Panel({
     width: 450,
     height: 175,
     contentURL: require("sdk/self").data.url("alerteVipBackend.html"),
-    contentScriptFile: data.url("alerteVipBackend.js")
+    contentScriptFile: [data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'), data.url("alerteVipBackend.js")]
 });
 
 var alerteErreurDNS = require("sdk/panel").Panel({
     width: 450,
-    height: 100,
+    height: 110,
     contentURL: require("sdk/self").data.url("alerteErreurDNS.html"),
-    contentScriptFile: data.url("alerteErreurDNS.js")
+    contentScriptFile: [data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'), data.url("alerteErreurDNS.js")]
 });
 
 var alerteErreurIndexation = require("sdk/panel").Panel({
     width: 450,
     height: 100,
     contentURL: require("sdk/self").data.url("alerteErreurIndexation.html"),
-    contentScriptFile: data.url("alerteErreurIndexation.js")
+    contentScriptFile: [data.url(data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'), "alerteErreurIndexation.js")]
 });
 
 panel.on("show", function () {

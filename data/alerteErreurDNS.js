@@ -6,6 +6,7 @@ boutonFermer.addEventListener('click', function(event) {
 
 self.port.on("show", function(msg) {
     document.getElementById("msg").innerHTML = msg;
+    $(boutonFermer).button();
     boutonFermer.focus();
 });
 
