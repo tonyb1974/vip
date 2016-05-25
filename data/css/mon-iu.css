@@ -1,0 +1,10 @@
+body.ui-state-error span.ui-icon-alert {
+    float: left;
+    margin-top: .5em;
+    margin-right: .3em;
+}
+
+body.ui-state-error input#fermer {
+    float: right;
+    margin: .7em;
+}

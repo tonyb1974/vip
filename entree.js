@@ -9,8 +9,9 @@ var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var sécurisation = require('profilSecurite/securisation');
 var modeSimple = true; //Par défaut, utilises le local Storage plutôt qu'Elasticsearch...
-var filtreActif = true //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
-var jquery = 'jquery-2.2.4.min.js';
+var filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
+var jquery = data.url('js/jquery-2.2.4.min.js');
+var jqueryUi =  data.url('js/jquery-ui-1.11.4.min.js');
 
 const tabs = require("sdk/tabs");
 
@@ -56,7 +57,7 @@ var myListener = {
     onProgressChange: function(aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {},
     onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
     onSecurityChange: function(aWebProgress, aRequest, aState) {}
-}
+};
 
 
 var filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
@@ -66,7 +67,6 @@ filter.addProgressListener(myListener, Ci.nsIWebProgress.NOTIFY_ALL);
 var webProgress = Cc["@mozilla.org/docshell;1"].createInstance(Ci.nsIInterfaceRequestor)
     .getInterface(Ci.nsIWebProgress);
 webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
-console.info('okkkk');
 
 /*fin  webProgressListener*/
 
@@ -134,7 +134,8 @@ function enregistrerReponse(reponse) {
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        alerteErreurIndexation.show();
+                        context.msg = 'Impossible d\'indexer la réponse de la requête http';
+                        alerteErreur.show();
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer la réponse suivante:', reponse);
                     }
                 }
@@ -217,7 +218,7 @@ TracingListener.prototype =
         }
         throw Components.results.NS_NOINTERFACE;
     }
-}
+};
 // Fin écoute réponses
 
 //Définition d'un panneau de recherche et attachement aux touches Alt-C
@@ -225,28 +226,7 @@ var panel = require("sdk/panel").Panel({
     width: 500,
     height: 700,
     contentURL: require("sdk/self").data.url("gestionDomaines.html"),
-    contentScriptFile: [data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'),data.url('gestionDomaines.js')]
-});
-
-var alerteDNSVipIntrouvable = require("sdk/panel").Panel({
-    width: 450,
-    height: 175,
-    contentURL: require("sdk/self").data.url("alerteVipBackend.html"),
-    contentScriptFile: [data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'), data.url("alerteVipBackend.js")]
-});
-
-var alerteErreurDNS = require("sdk/panel").Panel({
-    width: 450,
-    height: 110,
-    contentURL: require("sdk/self").data.url("alerteErreurDNS.html"),
-    contentScriptFile: [data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'), data.url("alerteErreurDNS.js")]
-});
-
-var alerteErreurIndexation = require("sdk/panel").Panel({
-    width: 450,
-    height: 100,
-    contentURL: require("sdk/self").data.url("alerteErreurIndexation.html"),
-    contentScriptFile: [data.url(data.url(jquery), data.url('jquery-ui-1.11.4/jquery-ui.js'), "alerteErreurIndexation.js")]
+    contentScriptFile: [jquery, jqueryUi, data.url('gestionDomaines.js')]
 });
 
 panel.on("show", function () {
@@ -254,19 +234,26 @@ panel.on("show", function () {
     panel.port.emit("show", context.domainesAutorises, context.domainesRefusés);
 });
 
-alerteDNSVipIntrouvable.on("show", function () {
-    //Passe la main au module alerteVipBackend.js en lui envoyant le message 'show'
-    alerteDNSVipIntrouvable.port.emit("show");
+
+//Le bouton de fermeture du panneau de gestion des domaines a été clické
+panel.port.on("panelClosed", function () {
+    panel.hide();
 });
 
-alerteErreurDNS.on("show", function () {
-    //Passe la main au module alerteErreurDNS.js en lui envoyant le message 'show'
-    alerteErreurDNS.port.emit("show", context.msg);
+var alerteErreur = require("sdk/panel").Panel({
+    width: 450,
+    height: 110,
+    contentURL: require("sdk/self").data.url("alerteErreur.html"),
+    contentScriptFile: [jquery, jqueryUi, data.url("alerteErreur.js")]
 });
 
-alerteErreurIndexation.on("show", function () {
-    //Passe la main au module alerteErreurIndexation.js en lui envoyant le message 'show'
-    alerteErreurIndexation.port.emit("show");
+alerteErreur.on("show", function () {
+    //Passe la main au module alerteErreur.js en lui envoyant le message 'show'
+    alerteErreur.port.emit("show", context.msg);
+});
+
+alerteErreur.port.on("alerteErreurFermé", function () {
+    alerteErreur.hide();
 });
 
 var showHotKey = Hotkey({
@@ -444,11 +431,11 @@ function journaliserRequête(channel, status) {
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        alerteErreurIndexation.show();
+                        context.msg = 'Impossible d\'indexer la requête http';
+                        alerteErreur.show();
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer la requete:', requête);
                     }
                     return;
-
                 }
             },
             anonymous: true
@@ -456,23 +443,6 @@ function journaliserRequête(channel, status) {
     }
 }
 events.on("http-on-modify-request", listener);
-
-//Le bouton de fermeture du panneau de gestion des domaines a été clické
-panel.port.on("panelClosed", function () {
-    panel.hide();
-});
-
-alerteDNSVipIntrouvable.port.on("alerteVipBackendFermé", function () {
-    alerteDNSVipIntrouvable.hide();
-});
-
-alerteErreurDNS.port.on("alerteErreurDNSFermé", function () {
-    alerteErreurDNS.hide();
-});
-
-alerteErreurIndexation.port.on("alerteErreurIndexationFermé", function () {
-    alerteErreurIndexation.hide();
-});
 
 function chercherDomaines() {
 
@@ -490,7 +460,8 @@ function chercherDomaines() {
             contentType: 'application/json',
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
-                    alerteDNSVipIntrouvable.show();
+                    context.msg = 'Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.';
+                    alerteErreur().show();
                     console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
                     return;
                 }
@@ -525,7 +496,8 @@ function chercherDomainesBannis() {
             contentType: 'application/json',
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
-                    alerteDNSVipIntrouvable.show();
+                    context.msg = 'Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.';
+                    alerteErreur.show();
                     console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
                     return;
                 }
@@ -565,13 +537,13 @@ function enregistrerNouveauDomaine(hote, ip) {
                 console.info("Enregistrement hôte autorisé...", hote);
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        alerteErreurIndexation.show();
+                        context.msg = 'Impossible d\'indexer le nouveau domaine.';
+                        alerteErreur.show();
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine suivant:', hote, 'ip=', ip);
                     } else {
                         console.info('Document déjà autorisé:', hote);
                     }
                     return;
-
                 } else {
                     console.info("Enregistrement ok !");
                     context.domainesAutorises.push({_id: hote, _source: {ip: ip}});
@@ -596,11 +568,11 @@ panel.port.on("hoteAjouté", function (hote, ip) {
         onLookupComplete: function (request, record, status) {
             if (!(status & 0x80000000) === 0) {
                 context.msg = 'Impossible de se connecter au service DNS.';
-                alerteErreurDNS.show();
+                alerteErreur.show();
                 return;
             } else if (status === 0x804B001E || !record) {
                 context.msg = 'Hôte introuvable.';
-                alerteErreurDNS.show();
+                alerteErreur.show();
                 return;
             }
 
@@ -650,7 +622,8 @@ function enregistrerNouveauDomaineRefusé(hote, ip) {
                 console.info("Enregistrement hôte banni...", hote);
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        alerteErreurIndexation.show();
+                        context.msg = 'Impossible d\'indexer le nouveau domaine.';
+                        alerteErreur.show();
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine banni suivant:', hote, 'ip:', ip);
                     } else {
                         console.error('Document déjà banni:', hote);
@@ -683,7 +656,8 @@ panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
                     onComplete: function (response) {
                         console.info("Suppression...", hoteSupprimé);
                         if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
-                            alerteErreurIndexation.show();
+                            context.msg = 'Impossible d\'indexer le nouveau domaine.';
+                            alerteErreur.show();
                             console.error('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
                             return;
                         } else {

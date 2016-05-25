@@ -1,13 +1,13 @@
-var champRecherche = document.getElementById("rechercheDomaines");
-var listeDomainesAcceptés = document.getElementById("domainesAcceptés");
-var listeDomainesRefusés = document.getElementById("domainesRefusés");
-var ajouterDomaine = document.getElementById("ajouter");
-var supprimerDomaine = document.getElementById("supprimer");
-var boutonFermer = document.getElementById("fermer");
+var champRecherche = document.getElementById('rechercheDomaines');
+var listeDomainesAcceptés = document.getElementById('domainesAcceptés');
+var listeDomainesRefusés = document.getElementById('domainesRefusés');
+var ajouterDomaine = document.getElementById('ajouter');
+var supprimerDomaine = document.getElementById('supprimer');
+var boutonFermer = document.getElementById('fermer');
 var suggestions = [];
 
 boutonFermer.addEventListener('click', function (event) {
-    self.port.emit("panelClosed");
+    self.port.emit('panelClosed');
 }, false);
 
 function créerNoeudAjout(parentNode, hoteReprésenté, ipReprésentée) {
@@ -18,7 +18,7 @@ function créerNoeudAjout(parentNode, hoteReprésenté, ipReprésentée) {
     input.setAttribute('type', 'button');
     input.setAttribute('value', '+');
     input.setAttribute('id', hoteReprésenté+'_bouton')
-    input.setAttribute('onclick', "document.getElementById(\'rechercheDomaines\').value=\'" + hoteReprésenté + "\';document.getElementById(\'ajouter\').click();");
+    input.setAttribute('onclick', 'document.getElementById(\'rechercheDomaines\').value=\'' + hoteReprésenté + '\';document.getElementById(\'ajouter\').click();');
     $(input).button();
     
     div.appendChild(input);
@@ -46,7 +46,7 @@ ajouterDomaine.addEventListener('click', function (event) {
     listeDomainesRefusés.removeChild(noeudASupprimer);
 
     créerNoeudSuppression(listeDomainesAcceptés, champRecherche.value, valeurIp);
-    self.port.emit("hoteAjouté", champRecherche.value, valeurIp);
+    self.port.emit('hoteAjouté', champRecherche.value, valeurIp);
 }, false);
 
 function créerNoeudSuppression(parentNode, hoteReprésenté, ipReprésentée) {
@@ -57,7 +57,7 @@ function créerNoeudSuppression(parentNode, hoteReprésenté, ipReprésentée) {
     input.setAttribute('type', 'button');
     input.setAttribute('value', '-');
     input.setAttribute('id',hoteReprésenté+'_bouton');
-    input.setAttribute('onclick', "document.getElementById(\'rechercheDomaines\').value=\'" + hoteReprésenté + "\';document.getElementById(\'supprimer\').click();");
+    input.setAttribute('onclick', 'document.getElementById(\'rechercheDomaines\').value=\'' + hoteReprésenté + '\';document.getElementById(\'supprimer\').click();');
     $(input).button();
 
     div.appendChild(input);
@@ -86,7 +86,7 @@ supprimerDomaine.addEventListener('click', function (event) {
     listeDomainesAcceptés.removeChild(noeudASupprimer);
 
     créerNoeudAjout(listeDomainesRefusés, champRecherche.value, valeurIp);
-    self.port.emit("hoteSupprimé", champRecherche.value, valeurIp);
+    self.port.emit('hoteSupprimé', champRecherche.value, valeurIp);
 }, false);
 
 function nettoyerLesListes() {
@@ -99,13 +99,9 @@ function nettoyerLesListes() {
     }
 }
 
-self.port.on("show", function (domainesAcceptés, domainesBannis) {
-    if (!champRecherche.value) {
-        champRecherche.value = 'www.';
-    }
-    champRecherche.setSelectionRange(0, champRecherche.value.length);
-    
-    //init suggestions
+self.port.on('show', function (domainesAcceptés, domainesBannis) {
+   
+    //réintialisation des suggestions
     suggestions = [];
     nettoyerLesListes();
     for (var indexDomaine in domainesAcceptés) {
@@ -120,13 +116,9 @@ self.port.on("show", function (domainesAcceptés, domainesBannis) {
 
     $('#ajouter').button();
     $('#supprimer').button();
-    $("#accordion").accordion({
-        heightStyle: "content"
-    });
-    $("#fermer").button();
-    $("#rechercheDomaines").autocomplete({
-        source: suggestions
-    });
+    $('#accordion').accordion({heightStyle: 'content'});
+    $('#fermer').button();
+    $('#rechercheDomaines').autocomplete({source: suggestions});
     champRecherche.focus();
 });
 
