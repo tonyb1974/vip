@@ -220,7 +220,7 @@ TracingListener.prototype =
 };
 // Fin écoute réponses
 
-//Définition d'un panneau de recherche et attachement aux touches Alt-C
+//Définition d'un panneau de recherche et attachement aux touches Alt-D
 var panel = require("sdk/panel").Panel({
     width: 500,
     height: 700,
@@ -392,7 +392,7 @@ function bloquer(channel) {
     if (trouve === false) {
         context.descriptionHote = channel.URI.host;
         enregistrerNouveauDomaineRefusé(context.descriptionHote);
-        notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-C pour autoriser ou refuser de nouveaux domaines.\n\nAppuyez sur Alt-O pour activer ou désactiver le filtrage des sites.'});
+        notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-d pour autoriser ou refuser de nouveaux domaines.\n\nAppuyez sur Alt-f pour activer ou désactiver le filtrage des sites.'});
     }
 
     //Pour éviter de journaliser le user-agent
