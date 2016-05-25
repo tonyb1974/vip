@@ -1,6 +1,9 @@
 self.port.on('nettoyer', function (urlDemandé) {
 
-    var hoteCourant = document.location.host;
+    var hoteCourant = 'inconnu'
+    if (document.location) {
+        hoteCourant = document.location.host;
+    }
 
     //Attention, des blocs de commentaires peuvent contenir des liens ou du code :
     //Ex : <!--[if lte IE 7]>

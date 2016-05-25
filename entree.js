@@ -134,8 +134,7 @@ function enregistrerReponse(reponse) {
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        context.msg = 'Impossible d\'indexer la réponse de la requête http';
-                        alerteErreur.show();
+                        alerter('Impossible d\'indexer la réponse de la requête http');
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer la réponse suivante:', reponse);
                     }
                 }
@@ -255,6 +254,11 @@ alerteErreur.on("show", function () {
 alerteErreur.port.on("alerteErreurFermé", function () {
     alerteErreur.hide();
 });
+
+function alerter(msg) {
+    context.msg = msg;
+    alerteErreur.show();
+}
 
 var showHotKey = Hotkey({
     combo: 'alt-c',
@@ -431,11 +435,9 @@ function journaliserRequête(channel, status) {
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        context.msg = 'Impossible d\'indexer la requête http';
-                        alerteErreur.show();
+                        alerter('Impossible d\'indexer la requête http');
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer la requete:', requête);
                     }
-                    return;
                 }
             },
             anonymous: true
@@ -460,10 +462,8 @@ function chercherDomaines() {
             contentType: 'application/json',
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
-                    context.msg = 'Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.';
-                    alerteErreur().show();
+                    alerter('Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.');
                     console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
-                    return;
                 }
                 var result = response.json;
                 if (result && result.hits) {
@@ -496,10 +496,8 @@ function chercherDomainesBannis() {
             contentType: 'application/json',
             onComplete: function (response) {
                 if (response.status < 200 || response.status >= 300) {
-                    context.msg = 'Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.';
-                    alerteErreur.show();
+                    alerter('Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.');
                     console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
-                    return;
                 }
                 var result = response.json;
                 if (result && result.hits) {
@@ -537,15 +535,12 @@ function enregistrerNouveauDomaine(hote, ip) {
                 console.info("Enregistrement hôte autorisé...", hote);
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        context.msg = 'Impossible d\'indexer le nouveau domaine.';
-                        alerteErreur.show();
+                        alerter('Impossible d\'indexer le nouveau domaine.');
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine suivant:', hote, 'ip=', ip);
                     } else {
                         console.info('Document déjà autorisé:', hote);
                     }
-                    return;
                 } else {
-                    console.info("Enregistrement ok !");
                     context.domainesAutorises.push({_id: hote, _source: {ip: ip}});
                     for (var domaineIndex in context.domainesRefusés) {
                         if (context.domainesRefusés[domaineIndex]._id === hote) {
@@ -567,13 +562,9 @@ panel.port.on("hoteAjouté", function (hote, ip) {
     var ecouteurDNS = {
         onLookupComplete: function (request, record, status) {
             if (!(status & 0x80000000) === 0) {
-                context.msg = 'Impossible de se connecter au service DNS.';
-                alerteErreur.show();
-                return;
+                alerter('Impossible de se connecter au service DNS.');
             } else if (status === 0x804B001E || !record) {
-                context.msg = 'Hôte introuvable.';
-                alerteErreur.show();
-                return;
+                alerter('Hôte introuvable.');
             }
 
             if (modeSimple) {
@@ -622,13 +613,11 @@ function enregistrerNouveauDomaineRefusé(hote, ip) {
                 console.info("Enregistrement hôte banni...", hote);
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
-                        context.msg = 'Impossible d\'indexer le nouveau domaine.';
-                        alerteErreur.show();
+                        alerter('Impossible d\'indexer le nouveau domaine.');
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine banni suivant:', hote, 'ip:', ip);
                     } else {
                         console.error('Document déjà banni:', hote);
                     }
-                    return;
                 } else {
                     console.info("Enregistrement hôte banni ok !");
                     context.domainesRefusés.push({_id: hote, _source: {ip: ip}});
@@ -656,10 +645,8 @@ panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
                     onComplete: function (response) {
                         console.info("Suppression...", hoteSupprimé);
                         if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
-                            context.msg = 'Impossible d\'indexer le nouveau domaine.';
-                            alerteErreur.show();
+                            alerter('Impossible d\'indexer le nouveau domaine.');
                             console.error('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
-                            return;
                         } else {
                             console.info("Suppression ok !");
                             enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
