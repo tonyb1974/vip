@@ -225,7 +225,7 @@ var panel = require("sdk/panel").Panel({
     width: 500,
     height: 700,
     contentURL: require("sdk/self").data.url("gestionDomaines.html"),
-    contentScriptFile: [jquery, jqueryUi, data.url('gestionDomaines.js')]
+    contentScriptFile: [jquery, jqueryUi, data.url('js/gestionDomaines.js')]
 });
 
 panel.on("show", function () {
@@ -243,7 +243,7 @@ var alerteErreur = require("sdk/panel").Panel({
     width: 450,
     height: 110,
     contentURL: require("sdk/self").data.url("alerteErreur.html"),
-    contentScriptFile: [jquery, jqueryUi, data.url("alerteErreur.js")]
+    contentScriptFile: [jquery, jqueryUi, data.url("js/alerteErreur.js")]
 });
 
 alerteErreur.on("show", function () {
@@ -285,7 +285,7 @@ var showHotKey = Hotkey({
 
 pageMod.PageMod({
     include: "*",
-    contentScriptFile: [data.url('filtre.js'), data.url(jquery)],
+    contentScriptFile: [data.url('js/filtre.js'), jquery],
     contentScriptWhen: "ready",
     onAttach: function (worker) {
         worker.port.emit("nettoyer", worker.url);
