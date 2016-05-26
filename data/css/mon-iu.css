@@ -8,3 +8,8 @@ body.ui-state-error input#fermer {
     float: right;
     margin: .7em;
 }
+
+body input#fermer {
+    float: right;
+    margin: .7em;
+}
