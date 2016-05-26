@@ -157,7 +157,7 @@ function nestPasUnAppelElastic(request) {
 
 //Ecoute des réponses
 function enregistrerReponse(reponse) {
-    if (!modeSimple) {
+    if (!modeSimple && modeEtenduElastic) {
         Request({
             url: elasticURL + "/requetes/reponse",
             content: JSON.stringify(reponse),
@@ -481,7 +481,7 @@ function bloquer(channel) {
 }
 
 function journaliserRequête(channel, status) {
-    if (!modeSimple && nestPasUnAppelElastic(channel) === true) {
+    if (!modeSimple && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
         var requête = {
             date: new Date().getTime(),
             fuseau: new Date().getTimezoneOffset(),
