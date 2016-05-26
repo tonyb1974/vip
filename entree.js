@@ -2,16 +2,15 @@ var pageMod = require('sdk/page-mod');
 var Request = require("sdk/request").Request;
 var events = require("sdk/system/events");
 var data = require('sdk/self').data;
-var { Hotkey } = require("sdk/hotkeys");
+var {Hotkey} = require("sdk/hotkeys");
 var notifications = require("sdk/notifications");
 var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var sécurisation = require('profilSecurite/securisation');
-var modeSimple = true; //Par défaut, utilises le local Storage plutôt qu'Elasticsearch...
 var filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
 var jquery = data.url('js/jquery-2.2.4.min.js');
-var jqueryUi =  data.url('js/jquery-ui-1.11.4.min.js');
+var jqueryUi = data.url('js/jquery-ui-1.11.4.min.js');
 
 const tabs = require("sdk/tabs");
 
@@ -31,10 +30,10 @@ var context = {
 };
 
 // add a listener to the 'open' event
-windows.on('open', function(window) {
+windows.on('open', function (window) {
     console.info('New Window');
 });
-windows.on('activate', function(window) {
+windows.on('activate', function (window) {
     console.info('New activation for Window');
 });
 /*webProgressListener*/
@@ -45,18 +44,21 @@ var myListener = {
     QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener",
         "nsISupportsWeakReference"]),
 
-    onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {
+    onStateChange: function (aWebProgress, aRequest, aFlag, aStatus) {
         console.info('status changed');
     },
 
-    onLocationChange: function(aProgress, aRequest, aURI, aFlag) {
+    onLocationChange: function (aProgress, aRequest, aURI, aFlag) {
         console.info(' =======> Nouvelle URI :', aURI.spec);
     },
 
     // For definitions of the remaining functions see related documentation
-    onProgressChange: function(aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {},
-    onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
-    onSecurityChange: function(aWebProgress, aRequest, aState) {}
+    onProgressChange: function (aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {
+    },
+    onStatusChange: function (aWebProgress, aRequest, aStatus, aMessage) {
+    },
+    onSecurityChange: function (aWebProgress, aRequest, aState) {
+    }
 };
 
 
@@ -72,7 +74,7 @@ webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
 
 //Ecouter l'appel d'une page par l'utilsateur et non par le système de chargement des sous-ressources d'une page...
 function listenerLoad(tab) {
-    if (context.urlVisitée !== tab.url)  {
+    if (context.urlVisitée !== tab.url) {
         context.urlVisitée = tab.url;
         context.idCorrellation = new Date().getTime();
     }
@@ -101,6 +103,7 @@ var prefs = prefService
     .getBranch("extensions.vip.");
 
 try {
+    prefs.getBoolPref("Mode-simple");
     prefs.getCharPref("elastic-url");
     prefs.getCharPref("regexp_hôtes_acceptés");
     var hotesAutorises = prefs.getCharPref("hôtes_acceptés");
@@ -109,24 +112,52 @@ try {
     }
 }
 catch (error) {
+    prefs.setBoolPref("Mode-simple", true);//Par défaut, utilises un stockage dans les paramètres plutôt qu'Elasticsearch...
     prefs.setCharPref("elastic-url", "http://127.0.0.1:9200");
+    prefs.setBoolPref("mode-étendu", false);
     prefs.setCharPref("regexp_hôtes_acceptés", "\w*[\:]{0,1}[\/]{0,2}.*googlevideo.com");
-    prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises:[]}));
+    var hotesAutorises = prefs.getCharPref("hôtes_acceptés");
+    if (!hotesAutorises) { //Evite d'écraser cette configuration lors des upgrades de version de l'extension
+        prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: []}));
+    }
     prefService.savePrefFile(null);
 }
 
 var elasticURL = prefs.getCharPref("elastic-url");
+var elasticPort = majElasticPort(elasticURL);
+var modeEtenduElastic = nouvellePréférenceBooléennePourNouvelleVersion("mode-étendu", false /*défaut*/);
 var tropNombreuxHotesGoogle = new RegExp(prefs.getCharPref("regexp_hôtes_acceptés"));
+var modeSimple = prefs.getBoolPref("Mode-simple");
 console.info('Elasticsearch:', elasticURL);
+
+
+function majElasticPort(données) {
+    var parties = données.split(':');
+    if (parties.length > 1) {
+        return Number.parseInt(parties[2]);
+    } else {
+        return 9200;
+    }
+}
+
+function nouvellePréférenceBooléennePourNouvelleVersion(nomPref, valeur) {
+    try {
+        var valeurExistante = prefs.getBoolPref(nomPref);
+        return valeurExistante;
+    } catch (error) {
+        prefs.setBoolPref(nomPref, valeur);
+        return valeur;
+    }
+}
 
 function nestPasUnAppelElastic(request) {
     var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
-    return (httpChannel.URI.path !== '/requetes/requete' && httpChannel.URI.path !== '/requetes/reponse' && httpChannel.URI.port !== 9200);
+    return (httpChannel.URI.path !== '/requetes/requete' && httpChannel.URI.path !== '/requetes/reponse' && httpChannel.URI.port !== elasticPort);
 }
 
 //Ecoute des réponses
 function enregistrerReponse(reponse) {
-    if(!modeSimple) {
+    if (!modeSimple) {
         Request({
             url: elasticURL + "/requetes/reponse",
             content: JSON.stringify(reponse),
@@ -187,7 +218,7 @@ TracingListener.prototype =
     },
 
     onStopRequest: function (request, contexteRéponse, statusCode) {
-        
+
         var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
         if (nestPasUnAppelElastic(httpChannel) === true && this.startTime /* i.e httpChannel.contentLength > 0*/) {
             var rep = {
@@ -224,7 +255,7 @@ TracingListener.prototype =
 var panel = require("sdk/panel").Panel({
     width: 500,
     height: 700,
-    contentURL: require("sdk/self").data.url("gestionDomaines.html"),
+    contentURL: data.url("gestionDomaines.html"),
     contentScriptFile: [jquery, jqueryUi, data.url('js/gestionDomaines.js')]
 });
 
@@ -233,16 +264,49 @@ panel.on("show", function () {
     panel.port.emit("show", context.domainesAutorises, context.domainesRefusés);
 });
 
-
 //Le bouton de fermeture du panneau de gestion des domaines a été clické
 panel.port.on("panelClosed", function () {
     panel.hide();
 });
 
+//Définition d'un panneau de configuration du moteur de recherche Alt-F
+var panelMoteurRecherche = require("sdk/panel").Panel({
+    width: 600,
+    height: 205,
+    contentURL: data.url("moteurRecherche.html"),
+    contentScriptFile: [jquery, jqueryUi, data.url('js/moteurRecherche.js')]
+});
+
+panelMoteurRecherche.on("show", function () {
+    //Passe la main au module moteurRecherche.js en lui envoyant le message 'show'
+    panelMoteurRecherche.port.emit("show", elasticURL, modeEtenduElastic);
+});
+
+//Le bouton de fermeture du panneau de gestion des domaines a été clické
+panelMoteurRecherche.port.on("panelClosed", function (adresseMoteurRecherche, modeEtendu) {
+    panelMoteurRecherche.hide();
+
+    if (elasticURL !== adresseMoteurRecherche || modeEtendu !== modeEtenduElastic) {
+        prefs.setCharPref("elastic-url", adresseMoteurRecherche);
+        elasticURL = adresseMoteurRecherche;
+        elasticPort = majElasticPort(elasticURL);
+        prefs.setBoolPref("mode-étendu", modeEtendu);
+        modeEtenduElastic = modeEtendu;
+        prefService.savePrefFile(null);
+    }
+    for (var indexDomaine in context.domainesAutorises) {
+        enregistrerNouveauDomaine(context.domainesAutorises[indexDomaine].hote, context.domainesAutorises[indexDomaine].ip, false/*création*/)
+    }
+    for (var indexDomaineBanni in context.domainesRefusés) {
+        enregistrerNouveauDomaineRefusé(context.domainesRefusés[indexDomaine].hote, context.domainesRefusés[indexDomaine].ip, false/*création*/)
+    }
+    notifications.notify({text: 'Moteur de recherche activé\n\nAdresse actuellement paramétrée pour ce serveur: ' + elasticURL});
+});
+
 var alerteErreur = require("sdk/panel").Panel({
-    width: 450,
-    height: 110,
-    contentURL: require("sdk/self").data.url("alerteErreur.html"),
+    width: 600,
+    height: 135,
+    contentURL: data.url("alerteErreur.html"),
     contentScriptFile: [jquery, jqueryUi, data.url("js/alerteErreur.js")]
 });
 
@@ -261,25 +325,41 @@ function alerter(msg) {
 }
 
 var showHotKey = Hotkey({
-    combo: 'alt-c',
+    combo: 'alt-d',
     onPress: function () {
-        console.info('Alt-C');
         panel.show();
     }
 });
 
 var showHotKey = Hotkey({
-    combo: 'alt-o',
+    combo: 'alt-f',
     onPress: function () {
         if (filtreActif) {
-            console.info('Alt-O: Désactivation du filtrage');
-            notifications.notify({text: 'Filtrage désactivé\n\nAppuyez sur Alt-O pour réactiver le filtrage des sites.'});
+            console.info('Alt-f: Désactivation du filtrage');
+            notifications.notify({text: 'Filtrage désactivé\n\nAppuyez sur Alt-f pour réactiver le filtrage des sites.'});
             filtreActif = false;
         } else {
-            console.info('Alt-O: Activation du filtrage');
-            notifications.notify({text: 'Filtrage activé\n\nAppuyez sur Alt-O pour désactiver le filtrage des sites.'});
+            console.info('Alt-f: Activation du filtrage');
+            notifications.notify({text: 'Filtrage activé\n\nAppuyez sur Alt-f pour désactiver le filtrage des sites.'});
             filtreActif = true;
         }
+    }
+});
+
+var showHotKey = Hotkey({
+    combo: 'alt-e',
+    onPress: function () {
+        if (modeSimple) {
+            modeSimple = false;
+            panelMoteurRecherche.show();
+        } else {
+            chercherDomaines(true /*silencieux*/);
+            chercherDomainesBannis(true /*silencieux*/);
+            modeSimple = true;
+            notifications.notify({text: 'Moteur de recherche désactivé'});
+        }
+        prefs.setBoolPref("Mode-simple", modeSimple);
+        prefService.savePrefFile(null);
     }
 });
 
@@ -446,10 +526,9 @@ function journaliserRequête(channel, status) {
 }
 events.on("http-on-modify-request", listener);
 
-function chercherDomaines() {
+function chercherDomaines(silencieux) {
 
-    if (!modeSimple)
-    {
+    if (!modeSimple) {
         var recherche = {
             query: {
                 match_all: {}
@@ -461,8 +540,8 @@ function chercherDomaines() {
             content: JSON.stringify(recherche),
             contentType: 'application/json',
             onComplete: function (response) {
-                if (response.status < 200 || response.status >= 300) {
-                    alerter('Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.');
+                if (!silencieux && (response.status < 200 || response.status >= 300)) {
+                    alerter('Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nMoteur de reherche installé ?');
                     console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
                 }
                 var result = response.json;
@@ -481,9 +560,8 @@ function chercherDomaines() {
     }
 }
 
-function chercherDomainesBannis() {
-    if (!modeSimple)
-    {
+function chercherDomainesBannis(silencieux) {
+    if (!modeSimple) {
         var recherche = {
             query: {
                 match_all: {}
@@ -495,8 +573,8 @@ function chercherDomainesBannis() {
             content: JSON.stringify(recherche),
             contentType: 'application/json',
             onComplete: function (response) {
-                if (response.status < 200 || response.status >= 300) {
-                    alerter('Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nPensez à vérifier que l\'installation de VIP(rivée) est complète.');
+                if (!silencieux && (response.status < 200 || response.status >= 300) ) {
+                    alerter('Impossible de se connecter au service d\'interrogation des noms de domaines.\n\nMoteur de recherche installé ?');
                     console.error('Erreur', response.status, response.statusText, '=> Impossible de se connecter au serveur de gestion des noms de domaine.');
                 }
                 var result = response.json;
@@ -510,7 +588,7 @@ function chercherDomainesBannis() {
     }
 }
 
-function enregistrerNouveauDomaine(hote, ip) {
+function enregistrerNouveauDomaine(hote, ip, création) {
 
     if (modeSimple) {
         var domaine = {_id: hote, _source: {ip: ip}};
@@ -527,8 +605,12 @@ function enregistrerNouveauDomaine(hote, ip) {
             fuseau: new Date().getTimezoneOffset(),
             ip: ip
         };
+        var requestURL = elasticURL + "/domaines/hote/" + hote;
+        if (création) {
+            requestURL += '?op_type=create';
+        }
         Request({
-            url: elasticURL + "/domaines/hote/" + hote + '?op_type=create',
+            url: requestURL,
             content: JSON.stringify(documentHote),
             contentType: 'application/json',
             onComplete: function (response) {
@@ -594,7 +676,7 @@ panel.port.on("hoteAjouté", function (hote, ip) {
 });
 
 
-function enregistrerNouveauDomaineRefusé(hote, ip) {
+function enregistrerNouveauDomaineRefusé(hote, ip, création) {
 
     if (modeSimple) {
         var domaine = {_id: hote, _source: {ip: ip}};
@@ -605,8 +687,12 @@ function enregistrerNouveauDomaineRefusé(hote, ip) {
             fuseau: new Date().getTimezoneOffset(),
             ip: ip || '0.0.0.0'
         };
+        var requestURL = elasticURL + "/domaines_bannis/hote/" + hote;
+        if (création) {
+            requestURL += '?op_type=create';
+        }
         Request({
-            url: elasticURL + "/domaines_bannis/hote/" + hote + '?op_type=create',
+            url: requestURL,
             content: JSON.stringify(documentHote),
             contentType: 'application/json',
             onComplete: function (response) {
@@ -630,34 +716,33 @@ function enregistrerNouveauDomaineRefusé(hote, ip) {
 
 panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
 
-    for (var domaineIndex in context.domainesAutorises) {
-        if (context.domainesAutorises[domaineIndex]._id === hoteSupprimé) {
-            var indexSauvegardé = domaineIndex;
-            if (modeSimple) {
-                enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
-                context.domainesAutorises.splice(indexSauvegardé, 1);
-                prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: context.domainesAutorises}));
-                prefService.savePrefFile(null);
-            } else {
-                Request({
-                    url: elasticURL + "/domaines/hote/" + hoteSupprimé,
-                    contentType: 'application/json',
-                    onComplete: function (response) {
-                        console.info("Suppression...", hoteSupprimé);
-                        if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
-                            alerter('Impossible d\'indexer le nouveau domaine.');
-                            console.error('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
-                        } else {
-                            console.info("Suppression ok !");
-                            enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
-                            context.domainesAutorises.splice(indexSauvegardé, 1);
-                        }
-                    },
-                    anonymous: true
-                }).delete();
+        for (var domaineIndex in context.domainesAutorises) {
+            if (context.domainesAutorises[domaineIndex]._id === hoteSupprimé) {
+                var indexSauvegardé = domaineIndex;
+                if (modeSimple) {
+                    enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
+                    context.domainesAutorises.splice(indexSauvegardé, 1);
+                    prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: context.domainesAutorises}));
+                    prefService.savePrefFile(null);
+                } else {
+                    Request({
+                        url: elasticURL + "/domaines/hote/" + hoteSupprimé,
+                        contentType: 'application/json',
+                        onComplete: function (response) {
+                            console.info("Suppression...", hoteSupprimé);
+                            if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
+                                alerter('Impossible d\'indexer le nouveau domaine.');
+                                console.error('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
+                            } else {
+                                enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
+                                context.domainesAutorises.splice(indexSauvegardé, 1);
+                            }
+                        },
+                        anonymous: true
+                    }).delete();
+                }
             }
         }
-    }
-});
+    });
 
 
