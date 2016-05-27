@@ -4,6 +4,12 @@ body.ui-state-error span.ui-icon-alert {
     margin-right: .3em;
 }
 
+body span.ui-icon-info {
+    float: left;
+    margin-top: .5em;
+    margin-right: .3em;
+}
+
 body.ui-state-error input#fermer {
     float: right;
     margin: .7em;
@@ -12,4 +18,8 @@ body.ui-state-error input#fermer {
 body input#fermer {
     float: right;
     margin: .7em;
+}
+
+.inline {
+    display: inline;
 }

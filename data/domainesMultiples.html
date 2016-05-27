@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'>
+    <link href='css/jquery-ui.min.css' rel='stylesheet'>
+    <link href='css/mon-iu.css' rel='stylesheet'>
+</head>
+<body>
+    <h1 class='ui-datepicker-title ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all'>Autoriser des noms de domaines à variantes multiples...</h1>
+    <div>
+        <h3 class="ui-state-highlight ui-overlay ui-corner-all"><p><quote>Certains noms de domaines ont de multiples variantes vers lesquels un utilisateur peut être redirigé.</p><p>Remplir sa liste de préférences avec de telles variantes pourrait être très fastidieux. C'est pourquoi il est ici proposé à l'utilisateur d'enregistrer des expressions régulières qui peuvent correspondre à la partie commune du nom de ces sites.</p>
+        <p>Ex: Le site 'www.youtube.com' redirige l'utilisateur vers des noms de domaines dont le nom a la forme '*googlevideo.com'</p></quote></h3>
+        <span><h3 class="inline">Domaines de noms variants: </h3><input id='expressionRégulière' type='text' tabindex='1' style='width:80%'/></span>
+        <p>
+            <span class="ui-icon ui-icon-info"><h3><span>Exemple de valeurs pour accepter plusieurs noms multiples de domaines:</span>
+                <div>'w*[:]{0,1}[/]{0,2}.*googlevideo.com;w*[:]{0,1}[/]{0,2}.*mappy.com'</div></h3></span>
+        </p>
+    </div>
+<input id='fermer' value='Fermer' type='button'/>
+</body></html>
