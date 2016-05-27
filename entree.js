@@ -102,6 +102,25 @@ var prefService = Cc["@mozilla.org/preferences-service;1"]
 var prefs = prefService
     .getBranch("extensions.vip.");
 
+//Initialisation de la page d'installation
+var panelAide = require("sdk/panel").Panel({
+    width: 800,
+    height: 600,
+    contentURL: data.url("aide.html"),
+    contentScriptFile: [jquery, jqueryUi, data.url("js/aide.js")]
+});
+
+panelAide.on("show", function () {
+    //Passe la main au module alerteErreur.js en lui envoyant le message 'show'
+    panelAide.port.emit("show");
+});
+
+panelAide.port.on("panelClosed", function () {
+    panelAide.hide();
+});
+//Fin
+
+//initialisation des paramètres Firefox
 try {
     prefs.getBoolPref("Mode-simple");
     prefs.getCharPref("elastic-url");
@@ -116,12 +135,11 @@ catch (error) {
     prefs.setCharPref("elastic-url", "http://127.0.0.1:9200");
     prefs.setBoolPref("mode-étendu", false);
     prefs.setCharPref("regexp_hôtes_acceptés", "\w*[\:]{0,1}[\/]{0,2}.*googlevideo.com");
-    var hotesAutorises = prefs.getCharPref("hôtes_acceptés");
-    if (!hotesAutorises) { //Evite d'écraser cette configuration lors des upgrades de version de l'extension
-        prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: []}));
-    }
+    prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: []}));
     prefService.savePrefFile(null);
+    panelAide.show();
 }
+//Fin
 
 var elasticURL = prefs.getCharPref("elastic-url");
 var elasticPort = majElasticPort(elasticURL);
@@ -359,10 +377,19 @@ alerteErreur.port.on("alerteErreurFermé", function () {
     alerteErreur.hide();
 });
 
+
+
 function alerter(msg) {
     context.msg = msg;
     alerteErreur.show();
 }
+
+var aideHotKey = Hotkey({
+    combo: 'alt-h',
+    onPress: function () {
+        panelAide.show();
+    }
+});
 
 var showHotKey = Hotkey({
     combo: 'alt-d',
