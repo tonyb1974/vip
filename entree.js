@@ -141,8 +141,10 @@ function buildExpRegNomsMultiples(prefs) {
 }
 
 function estUnNomAccepté(nom) {
+    var correspondances;
     for (var index in nomsMultiplesRegExp) {
-        if(nomsMultiplesRegExp[index].exec(nom) === true) {
+        correspondances = nomsMultiplesRegExp[index].exec(nom);
+        if(correspondances && correspondances.length === 1 && correspondances[0] === nom) {
             return true;
         }
     }
@@ -336,6 +338,8 @@ panelDomainesMultiples.on("show", function () {
 panelDomainesMultiples.port.on("panelClosed", function (expRegulière) {
     panelDomainesMultiples.hide();
     prefs.setCharPref("regexp_hôtes_acceptés", expRegulière);
+    nomsMultiples = prefs.getCharPref("regexp_hôtes_acceptés");
+    nomsMultiplesRegExp = buildExpRegNomsMultiples(nomsMultiples);
     prefService.savePrefFile(null);
 });
 
