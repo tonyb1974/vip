@@ -9,7 +9,7 @@ Cette valeur permet de passer outre une protection normalement apportée par l'e
 Ceci permet notemment de lutter contre une attaque de type [Cross-Site-Scripting](https://en.wikipedia.org/wiki/Cross-site_scripting)
 
 
-> Dans cette première version:
+Dans cette première version:
  - le **User-agent** qui trahit votre système d'exploitation, votre navigateur et leurs versions respectives est transformé en date et heure de la requête
  - le **Referer** qui trahit le site qui vous envoie vers une page est vidé de sa valeur fournie par l'explorateur.
  - le **localStorage(dont l'usage est proche de celui d'un cookie)** est désactivé dans toutes les pages visitées.
@@ -26,24 +26,37 @@ Cette extension, se base sur une **liste blanche** de **noms de domaines** qu'il
 - Si un domaine est connu de l'utilisateur et autorisé par lui, il est possible de visiter les sites internet de ce domaine.
 - Si un domaine est inconnu de l'utilisateur, l'extension bloque la requête et ajoute le domaine en question à la liste des domaines bannis. Une notification système indique à l'utilisateur que des domaines ont été bloqués.
 
-La combinaison de touches **'Alt-d'** Permet à l'utilisateur de voir les domaines autorisés et les domaines bannis.
+La combinaison de touches **'Alt-d'** ou **'Alt-h'** permet à l'utilisateur d'accéder à l'aide en ligne du module
+
+La combinaison de touches **'Alt-d'** permet à l'utilisateur de voir les domaines autorisés et les domaines bannis.
 Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni aux domaines autorisés.
 
-La combinaison de touches **'Alt-e'** Permet de passer du mode standard au mode étendu avec un moteur de recherche **Elasticsearch**
+La combinaison de touches **'Alt-e'** permet de passer du mode standard au mode étendu avec un moteur de recherche **Elasticsearch**
 Lors du passage en **mode étendu**, un panneau de configuration permet de saisir l'**adresse url** ainsi que le **port** d'écoute du **moteur de recherche**. Ex : **'http://localhost:9200'**
 Une option permet de demander le stockage des **requêtes bloquées et non bloquées** ainsi que des **réponses reçues(requêtes non bloquées)**.
 
-La combinaison de touches **'Alt-f'** Permet d'**activer**/**désactiver** le filtrage des sites.
+La combinaison de touches **'Alt-f'** permet d'**activer**/**désactiver** le filtrage des sites.
 > Attention, L'anonymisation du **User-agent**, du **Referer**, la désactivation du **localStorage** et des **scripts** directement inclus dans les pages sont toujours actifs.
 
 La combinaison de touches **'Alt-n'** permet de renseigner des **expressions régulières** correspondant à un ensemble de noms de domaine séparées par des points-virgule qui seront ajoutés à la **liste blanche des domaines autorisés**.
-> Ex: '*.com;*.fr'
+> Ex: Pouur le site 'http://www.pagesjaunes.fr/', des noms de domaines de la forme 'static5.pagesjaunes.fr' nécessaires aux ressources statiques sont refusés.
+Saisir une expression régulière de la forme 'static[0-9]{0,1}\.pagesjaunes.fr' permet d'autoriser toutes les variantes des sous-domaines du site: 'static4.pagesjaunes.fr', 'static5.pagesjaunes.fr' , ...
 
-Dans la version standard, sans mode étendu et moteur de recherche, seule la liste des domaines autorisés reste persistente entre deux exécution de Firefox.
+Dans la version standard, sans mode étendu et moteur de recherche, seule la liste des domaines autorisés reste persistente entre deux exécutions de Firefox.
+
+# Respect de la vie privée et des consignes de développement **Mozilla**
+
+Ce plugin respecte les [usages en vigueur](https://www.mozilla.org/en-US/about/legal/acceptable-use/) sur les produits basés sur les outils **Mozilla**
+Ce plugin est créé spécialement pour tenter d'améliorer encore le respect de la vie privée
+Ce plugin sera soumis à signature sur la plateforme de gestion des plugins **Firefox**
+Avant une diffusion plus large, il suivra notamment:
+ - Le [process de signature](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox?as=u&utm_source=inproduct) des extensions
+ - Un [process de revue de code](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox?as=u&utm_source=inproduct) pour vérification des consignes **Mozilla** de développement
+ - Un [process de submission des sources](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox?as=u&utm_source=inproduct)
 
 # Installation pour une utilisation en mode étendu
 
-Pour fonctionner sans se fonder sur le [LocalStorage](http://www.w3.org/TR/webstorage/) HTML5, les noms de **domaines autorisés** ou **bannis** sont stockés dans un cluster **Elasticsearch**(Moteur de recherche).
+Pour fonctionner sans se fonder sur le [stockage de pamètres de Firefox](#), les noms de **domaines autorisés** ou **bannis** sont stockés dans un cluster **Elasticsearch**(Moteur de recherche).
 
 Ce moteur de recherche peut permettre à de nombreuses extensions de partager un stockage externe commun tout en proposant un moteur de recherche local utilisable par les utilisateurs du poste informatique.
 
