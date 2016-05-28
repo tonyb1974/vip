@@ -4,21 +4,20 @@ var events = require("sdk/system/events");
 var data = require('sdk/self').data;
 var {Hotkey} = require("sdk/hotkeys");
 var notifications = require("sdk/notifications");
+var navigationPrivée = require("sdk/private-browsing");
+var windows = require("sdk/windows").browserWindows;
+var tabs = require("sdk/tabs");
 var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var sécurisation = require('profilSecurite/securisation');
 var filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
+var navigationPublique = false;
 var jquery = data.url('js/jquery-2.2.4.min.js');
 var jqueryUi = data.url('js/jquery-ui-1.11.4.min.js');
-
-const tabs = require("sdk/tabs");
-
 var {Cc, Ci, Cu} = require('chrome');
 var dnsService = Cc["@mozilla.org/network/dns-service;1"].createInstance(Ci.nsIDNSService);
 var thread = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager).currentThread;
-
-var windows = require("sdk/windows").browserWindows;
 
 var context = {
     hoteDemandé: '', //l'hôte principal demandé lors du chargement de la page.
@@ -29,50 +28,17 @@ var context = {
     idCorrellation: new Date().getTime()
 };
 
-// add a listener to the 'open' event
-windows.on('open', function (window) {
-    console.info('New Window');
-});
-windows.on('activate', function (window) {
-    console.info('New activation for Window');
-});
-/*webProgressListener*/
-
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
-var myListener = {
-    QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener",
-        "nsISupportsWeakReference"]),
-
-    onStateChange: function (aWebProgress, aRequest, aFlag, aStatus) {
-        console.info('status changed');
-    },
-
-    onLocationChange: function (aProgress, aRequest, aURI, aFlag) {
-        console.info(' =======> Nouvelle URI :', aURI.spec);
-    },
-
-    // For definitions of the remaining functions see related documentation
-    onProgressChange: function (aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {
-    },
-    onStatusChange: function (aWebProgress, aRequest, aStatus, aMessage) {
-    },
-    onSecurityChange: function (aWebProgress, aRequest, aState) {
+function respectNavigationPrivée(objet) {
+    navigationPublique = !navigationPrivée.isPrivate(objet);
+    if (!navigationPublique) {
+        notifications.notify({text: 'Navigation privée\n\nDans cette fenêtre et durant toute la durée de la navigation privée, le plugin ViP ne stockera plus les domaines bannis qui n\'étaient pas déjà dans les listes des domaines autorisés ou bannis.'});
+    } else {
+        notifications.notify({text: 'Navigation publique'});
     }
-};
-
-
-var filter = Cc["@mozilla.org/appshell/component/browser-status-filter;1"]
-    .createInstance(Ci.nsIWebProgress);
-filter.addProgressListener(myListener, Ci.nsIWebProgress.NOTIFY_ALL);
-
-var webProgress = Cc["@mozilla.org/docshell;1"].createInstance(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIWebProgress);
-webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
-
-/*fin  webProgressListener*/
+}
 
 //Ecouter l'appel d'une page par l'utilsateur et non par le système de chargement des sous-ressources d'une page...
+//Gérer la navigation privée...
 function listenerLoad(tab) {
     if (context.urlVisitée !== tab.url) {
         context.urlVisitée = tab.url;
@@ -91,6 +57,7 @@ tabs.on('open', function (tab) {
 });
 tabs.on('activate', function (tab) {
     listenerLoad(tab);
+    respectNavigationPrivée(tab);
 });
 tabs.on('pageshow', function (tab) {
     listenerLoad(tab);
@@ -104,14 +71,13 @@ var prefs = prefService
 
 //Initialisation de la page d'installation
 var panelAide = require("sdk/panel").Panel({
-    width: 800,
+    width: 850,
     height: 600,
     contentURL: data.url("aide.html"),
     contentScriptFile: [jquery, jqueryUi, data.url("js/aide.js")]
 });
 
 panelAide.on("show", function () {
-    //Passe la main au module alerteErreur.js en lui envoyant le message 'show'
     panelAide.port.emit("show");
 });
 
@@ -162,12 +128,13 @@ function estUnNomAccepté(nom) {
     var correspondances;
     for (var index in nomsMultiplesRegExp) {
         correspondances = nomsMultiplesRegExp[index].exec(nom);
-        if(correspondances && correspondances.length === 1 && correspondances[0] === nom) {
+        if (correspondances && correspondances.length === 1 && correspondances[0] === nom) {
             return true;
         }
     }
     return false;
 }
+
 function majElasticPort(données) {
     var parties = données.split(':');
     if (parties.length > 1) {
@@ -377,14 +344,19 @@ alerteErreur.port.on("alerteErreurFermé", function () {
     alerteErreur.hide();
 });
 
-
-
 function alerter(msg) {
     context.msg = msg;
     alerteErreur.show();
 }
 
 var aideHotKey = Hotkey({
+    combo: 'alt-a',
+    onPress: function () {
+        panelAide.show();
+    }
+});
+
+var aideHotKey_Anglais = Hotkey({
     combo: 'alt-h',
     onPress: function () {
         panelAide.show();
@@ -456,7 +428,7 @@ pageMod.PageMod({
     attachTo: ["existing", "top"],
     onAttach: function onAttach(worker) {
         listenerLoad(worker.tab);
-        console.info('tab.url:', worker.tab.url);
+        console.error('tab.url:', worker.tab.url);
     }
 });
 
@@ -526,7 +498,9 @@ function listener(event) {
 }
 
 function accepter(channel) {
-    journaliserRequête(channel, true);
+    if (navigationPublique) {
+        journaliserRequête(channel, true);
+    }
 
     //Dans tous les cas, nous ne donnons pas notre user agent.
     channel.setRequestHeader("User-Agent", new Date().getTime(), false);
@@ -536,6 +510,7 @@ function accepter(channel) {
 
 function bloquer(channel) {
     channel.cancel(0x804B0002); //On annule la requête avec un NS_BINDING_ERROR
+
     var trouve = false;
     for (var domaine in context.domainesRefusés) {
         if (context.domainesRefusés[domaine]._id === channel.URI.host) {
@@ -545,17 +520,23 @@ function bloquer(channel) {
     }
     if (trouve === false) {
         context.descriptionHote = channel.URI.host;
-        enregistrerNouveauDomaineRefusé(context.descriptionHote);
-        notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-d pour autoriser ou refuser de nouveaux domaines.\n\nAppuyez sur Alt-f pour activer ou désactiver le filtrage des sites.'});
+        if (navigationPublique) {
+            enregistrerNouveauDomaineRefusé(context.descriptionHote);
+            notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-d pour autoriser ou refuser de nouveaux domaines.\n\nAppuyez sur Alt-f pour activer ou désactiver le filtrage des sites.'});
+        } else {
+            console.info('Hôte bloqué non enregistré (navigation privée): ' + context.descriptionHote);
+        }
     }
 
     //Pour éviter de journaliser le user-agent
     channel.setRequestHeader("User-Agent", 0, false);
-    journaliserRequête(channel, false);
+    if (navigationPublique) {
+        journaliserRequête(channel, false);
+    }
 }
 
 function journaliserRequête(channel, status) {
-    if (!modeSimple && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
+    if (!modeSimple && navigationPublique && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
         var requête = {
             date: new Date().getTime(),
             fuseau: new Date().getTimezoneOffset(),
