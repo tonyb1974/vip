@@ -286,15 +286,30 @@ exports.restaurerLesParamètres = function () {
     for (var attribut in préférencesInitiales) {
         var prefix = attribut.split('.')[0];
         var suffix = attribut.substr(attribut.indexOf('.') + 1, attribut.length);
-
+        var valeurActuelle;
         if (typeof préférencesInitiales[attribut] === 'boolean') {
+            valeurActuelle = prefs[prefix].getBoolPref(suffix);
+            if(valeurActuelle !== préférencesInitiales[attribut] && valeurActuelle !== préférencesSécurisantes[attribut]) {
+                préférencesInitiales[attribut] = valeurActuelle;
+            } else {
                 prefs[prefix].setBoolPref(suffix, préférencesInitiales[attribut]);
+            }
         }
         else if (typeof préférencesInitiales[attribut] === 'string') {
+            valeurActuelle = prefs[prefix].getCharPref(suffix);
+            if(valeurActuelle !== préférencesInitiales[attribut] && valeurActuelle !== préférencesSécurisantes[attribut]) {
+                préférencesInitiales[attribut] = valeurActuelle;
+            } else {
                 prefs[prefix].setCharPref(suffix, préférencesInitiales[attribut]);
+            }
         }
         else if (typeof préférencesInitiales[attribut] === 'number') {
+            valeurActuelle = prefs[prefix].getIntPref(suffix);
+            if(valeurActuelle !== préférencesInitiales[attribut] && valeurActuelle !== préférencesSécurisantes[attribut]) {
+                préférencesInitiales[attribut] = valeurActuelle;
+            } else {
                 prefs[prefix].setIntPref(suffix, préférencesInitiales[attribut]);
+            }
         }
     }
     prefsViP.setCharPref('preferencesInitiales','');
