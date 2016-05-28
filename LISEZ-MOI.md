@@ -26,7 +26,7 @@ Cette extension, se base sur une **liste blanche** de **noms de domaines** qu'il
 - Si un domaine est connu de l'utilisateur et autorisé par lui, il est possible de visiter les sites internet de ce domaine.
 - Si un domaine est inconnu de l'utilisateur, l'extension bloque la requête et ajoute le domaine en question à la liste des domaines bannis. Une notification système indique à l'utilisateur que des domaines ont été bloqués.
 
-La combinaison de touches **'Alt-d'** ou **'Alt-h'** permet à l'utilisateur d'accéder à l'aide en ligne du module
+La combinaison de touches **'Alt-a'** ou **'Alt-h'** permet à l'utilisateur d'accéder à l'aide en ligne du module
 
 La combinaison de touches **'Alt-d'** permet à l'utilisateur de voir les domaines autorisés et les domaines bannis.
 Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni aux domaines autorisés.
@@ -47,8 +47,11 @@ Dans la version standard, sans mode étendu et moteur de recherche, seule la lis
 # Respect de la vie privée et des consignes de développement **Mozilla**
 
 Ce plugin respecte les [usages en vigueur](https://www.mozilla.org/en-US/about/legal/acceptable-use/) sur les produits basés sur les outils **Mozilla**
+
 Ce plugin est créé spécialement pour tenter d'améliorer encore le respect de la vie privée
+
 Ce plugin sera soumis à signature sur la plateforme de gestion des plugins **Firefox**
+
 Avant une diffusion plus large, il suivra notamment:
  - Le [process de signature](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox?as=u&utm_source=inproduct) des extensions
  - Un [process de revue de code](https://support.mozilla.org/en-US/kb/add-on-signing-in-firefox?as=u&utm_source=inproduct) pour vérification des consignes **Mozilla** de développement
