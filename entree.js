@@ -18,6 +18,7 @@ var jqueryUi = data.url('js/jquery-ui-1.11.4.min.js');
 var {Cc, Ci, Cu} = require('chrome');
 var dnsService = Cc["@mozilla.org/network/dns-service;1"].createInstance(Ci.nsIDNSService);
 var thread = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager).currentThread;
+var paramètresSécurisés = false;
 
 var context = {
     hoteDemandé: '', //l'hôte principal demandé lors du chargement de la page.
@@ -363,6 +364,17 @@ var aideHotKey_Anglais = Hotkey({
     }
 });
 
+var restaurerParamètres = Hotkey({
+    combo: 'alt-p',
+    onPress: function () {
+        if (paramètresSécurisés) {
+            paramètresSécurisés = sécurisation.restaurerLesParamètres();
+        } else {
+            paramètresSécurisés = sécurisation.navigationPrivee();
+        }
+    }
+});
+
 var showHotKey = Hotkey({
     combo: 'alt-d',
     onPress: function () {
@@ -434,7 +446,7 @@ pageMod.PageMod({
 
 chercherDomaines();
 chercherDomainesBannis();
-sécurisation.navigationPrivee();
+paramètresSécurisés = sécurisation.navigationPrivee();
 
 function getHeader(channel, header) {
     try {

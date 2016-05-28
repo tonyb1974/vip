@@ -42,6 +42,8 @@ La combinaison de touches **'Alt-n'** permet de renseigner des **expressions ré
 > Ex: Pouur le site 'http://www.pagesjaunes.fr/', des noms de domaines de la forme 'static5.pagesjaunes.fr' nécessaires aux ressources statiques sont refusés.
 Saisir une expression régulière de la forme 'static[0-9]{0,1}\.pagesjaunes.fr' permet d'autoriser toutes les variantes des sous-domaines du site: 'static4.pagesjaunes.fr', 'static5.pagesjaunes.fr' , ...
 
+La combinaison de touches **'Alt-p'** permet de revenir aux paramètres initiaux de Firefox ou d'appliquer une nouvelle fois les paramètres sécurisés.
+
 Dans la version standard, sans mode étendu et moteur de recherche, seule la liste des domaines autorisés reste persistente entre deux exécutions de Firefox.
 
 # Respect de la vie privée et des consignes de développement **Mozilla**
