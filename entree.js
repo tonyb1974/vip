@@ -12,6 +12,7 @@ var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var sécurisation = require('profilSecurite/securisation');
 var filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
+var filtreJavascriptActif = true //Par défaut, le module filtre le javascript inline des pages html chargées.
 var navigationPublique = false;
 var jquery = data.url('js/jquery-2.2.4.min.js');
 var jqueryUi = data.url('js/jquery-ui-1.11.4.min.js');
@@ -350,6 +351,38 @@ function alerter(msg) {
     alerteErreur.show();
 }
 
+var filtreJavascript = function (worker) {
+    if (filtreJavascriptActif) {
+        worker.port.emit("nettoyer", worker.url);
+        worker.port.on("hoteDemandé", function (hoteDemandé) {
+            context.hoteDemandé = hoteDemandé;
+        });
+    } else {
+        filtreNeutre(worker);
+    }
+}
+
+var filtreNeutre = function(worker) {
+    notifications.notify({text: 'Aucun filtrage'});
+}
+
+var moduleFiltrant = pageMod.PageMod({
+    include: "*",
+    contentScriptFile: [data.url('js/filtre.js'), jquery],
+    contentScriptWhen: "ready",
+    onAttach: filtreJavascript
+});
+
+pageMod.PageMod({
+    include: ["*"],
+    contentScriptWhen: "start",
+    attachTo: ["existing", "top"],
+    onAttach: function onAttach(worker) {
+        listenerLoad(worker.tab);
+        console.error('tab.url:', worker.tab.url);
+    }
+});
+
 var aideHotKey = Hotkey({
     combo: 'alt-a',
     onPress: function () {
@@ -375,29 +408,40 @@ var restaurerParamètres = Hotkey({
     }
 });
 
-var showHotKey = Hotkey({
+var gestionDomainesHotKey = Hotkey({
     combo: 'alt-d',
     onPress: function () {
         panel.show();
     }
 });
 
-var showHotKey = Hotkey({
+var gestionFiltrageHotKey = Hotkey({
     combo: 'alt-f',
     onPress: function () {
         if (filtreActif) {
-            console.info('Alt-f: Désactivation du filtrage');
             notifications.notify({text: 'Filtrage désactivé\n\nAppuyez sur Alt-f pour réactiver le filtrage des sites.'});
             filtreActif = false;
         } else {
-            console.info('Alt-f: Activation du filtrage');
             notifications.notify({text: 'Filtrage activé\n\nAppuyez sur Alt-f pour désactiver le filtrage des sites.'});
             filtreActif = true;
         }
     }
 });
 
-var showHotKey = Hotkey({
+var filtreJavascriptHotKey = Hotkey({
+    combo: 'alt-j',
+    onPress: function () {
+        if (filtreJavascriptActif) {
+            filtreJavascriptActif = false;
+            notifications.notify({text: 'Filtrage du javascript \'inline\' désactivé\n\nAppuyez sur Alt-j pour réactiver le filtrage du javascript \'inline\'.'});
+        } else {
+            filtreJavascriptActif = true;
+            notifications.notify({text: 'Filtrage du javascript \'inline\' activé\n\nAppuyez sur Alt-j pour désactiver le filtrage du javascript \'inline\'.'});
+        }
+    }
+});
+
+var modeEtenduHotKey = Hotkey({
     combo: 'alt-e',
     onPress: function () {
         if (modeSimple) {
@@ -414,33 +458,10 @@ var showHotKey = Hotkey({
     }
 });
 
-var showHotKey = Hotkey({
+var nomMultiplesHotKey = Hotkey({
     combo: 'alt-n',
     onPress: function () {
         panelDomainesMultiples.show();
-    }
-});
-
-pageMod.PageMod({
-    include: "*",
-    contentScriptFile: [data.url('js/filtre.js'), jquery],
-    contentScriptWhen: "ready",
-    onAttach: function (worker) {
-        worker.port.emit("nettoyer", worker.url);
-        console.info(worker.url);
-        worker.port.on("hoteDemandé", function (hoteDemandé) {
-            context.hoteDemandé = hoteDemandé;
-        });
-    }
-});
-
-pageMod.PageMod({
-    include: ["*"],
-    contentScriptWhen: "start",
-    attachTo: ["existing", "top"],
-    onAttach: function onAttach(worker) {
-        listenerLoad(worker.tab);
-        console.error('tab.url:', worker.tab.url);
     }
 });
 

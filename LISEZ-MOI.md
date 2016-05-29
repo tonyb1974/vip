@@ -38,6 +38,8 @@ Une option permet de demander le stockage des **requêtes bloquées et non bloqu
 La combinaison de touches **'Alt-f'** permet d'**activer**/**désactiver** le filtrage des sites.
 > Attention, L'anonymisation du **User-agent**, du **Referer**, la désactivation du **localStorage** et des **scripts** directement inclus dans les pages sont toujours actifs.
 
+La combinaison de touches **'Alt-j'** permet d'**activer**/**désactiver** le filtrage des **scripts** directement inclus dans les pages.
+
 La combinaison de touches **'Alt-n'** permet de renseigner des **expressions régulières** correspondant à un ensemble de noms de domaine séparées par des points-virgule qui seront ajoutés à la **liste blanche des domaines autorisés**.
 > Ex: Pour le site 'http://www.pagesjaunes.fr/', des noms de domaines de la forme 'static5.pagesjaunes.fr' nécessaires aux ressources statiques sont refusés.
 Saisir une expression régulière de la forme 'static[0-9]{0,1}\\.pagesjaunes.fr' permet d'autoriser toutes les variantes des sous-domaines du site: 'static4.pagesjaunes.fr', 'static5.pagesjaunes.fr' , ...
