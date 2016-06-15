@@ -7,6 +7,7 @@ var notifications = require("sdk/notifications");
 var navigationPrivée = require("sdk/private-browsing");
 var windows = require("sdk/windows").browserWindows;
 var tabs = require("sdk/tabs");
+var tabutils = require('sdk/tabs/utils');
 var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
@@ -20,15 +21,19 @@ var {Cc, Ci, Cu} = require('chrome');
 var dnsService = Cc["@mozilla.org/network/dns-service;1"].createInstance(Ci.nsIDNSService);
 var thread = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager).currentThread;
 var paramètresSécurisés = false;
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+var { viewFor } = require("sdk/view/core");
 
 var context = {
-    hoteDemandé: '', //l'hôte principal demandé lors du chargement de la page.
     descriptionHote: '',
     domainesAutorises: [],
     domainesRefusés: [],
     urlVisitée: '',
+    hôteVisité: '',
     idCorrellation: new Date().getTime()
 };
+
+
 
 function respectNavigationPrivée(objet) {
     navigationPublique = !navigationPrivée.isPrivate(objet);
@@ -41,28 +46,44 @@ function respectNavigationPrivée(objet) {
 
 //Ecouter l'appel d'une page par l'utilsateur et non par le système de chargement des sous-ressources d'une page...
 //Gérer la navigation privée...
-function listenerLoad(tab) {
-    if (context.urlVisitée !== tab.url) {
-        context.urlVisitée = tab.url;
-        context.idCorrellation = new Date().getTime();
-    }
+
+var myListener = {
+    QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener"]),
+    onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {},
+    onLocationChange: function(aProgress, aRequest, aURI, aFlag) {
+        context.hôteVisité = aURI.host;
+        if (context.urlVisitée !== aURI.prePath + aURI.path) {
+            context.urlVisitée = aURI.prePath + aURI.path;
+            context.idCorrellation = new Date().getTime();
+        }
+    },
+    onProgressChange: function(aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {},
+    onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
+    onSecurityChange: function(aWebProgress, aRequest, aState) {}
 }
 
-tabs.on('load', function (tab) {
-    listenerLoad(tab);
-});
-tabs.on('ready', function (tab) {
-    listenerLoad(tab);
-});
-tabs.on('open', function (tab) {
-    listenerLoad(tab);
-});
+function addProgressListener(highLevelTab) {
+    var browser = tabutils.getTabBrowserForTab(viewFor(highLevelTab));
+    if (browser) {
+        browser.removeProgressListener( myListener );
+        browser.addProgressListener( myListener ); // Evite l'ajout multiple
+    }
+}
+function removeProgressListener(highLevelTab) {
+    var browser = tabutils.getTabBrowserForTab(viewFor(highLevelTab));
+    if (browser) {
+        context.hôteVisité='';
+        browser.removeProgressListener( myListener );
+    }
+}
+addProgressListener(tabs[0]);
+
 tabs.on('activate', function (tab) {
-    listenerLoad(tab);
+    addProgressListener(tab)
     respectNavigationPrivée(tab);
 });
-tabs.on('pageshow', function (tab) {
-    listenerLoad(tab);
+tabs.on('deactivate', function (tab) {
+    removeProgressListener(tab);
 });
 //Fin d'écoute utilisateur
 
@@ -231,6 +252,7 @@ TracingListener.prototype =
                 date: new Date().getTime(),
                 fuseau: new Date().getTimezoneOffset(),
                 idCorrellation: context.idCorrellation,
+                hôteVisité: context.hôteVisité,
                 urlVisitee: context.urlVisitée,
                 methode: httpChannel.requestMethod,
                 hote: getHeader(httpChannel, "host"),
@@ -309,7 +331,6 @@ panelMoteurRecherche.port.on("panelClosed", function (adresseMoteurRecherche, mo
     notifications.notify({text: 'Moteur de recherche activé\n\nAdresse actuellement paramétrée pour ce serveur: ' + elasticURL});
 });
 
-
 var panelDomainesMultiples = require("sdk/panel").Panel({
     width: 800,
     height: 420,
@@ -354,9 +375,6 @@ function alerter(msg) {
 var filtreJavascript = function (worker) {
     if (filtreJavascriptActif) {
         worker.port.emit("nettoyer", worker.url);
-        worker.port.on("hoteDemandé", function (hoteDemandé) {
-            context.hoteDemandé = hoteDemandé;
-        });
     } else {
         filtreNeutre(worker);
     }
@@ -371,16 +389,6 @@ var moduleFiltrant = pageMod.PageMod({
     contentScriptFile: [data.url('js/filtre.js'), jquery],
     contentScriptWhen: "ready",
     onAttach: filtreJavascript
-});
-
-pageMod.PageMod({
-    include: ["*"],
-    contentScriptWhen: "start",
-    attachTo: ["existing", "top"],
-    onAttach: function onAttach(worker) {
-        listenerLoad(worker.tab);
-        console.error('tab.url:', worker.tab.url);
-    }
 });
 
 var aideHotKey = Hotkey({
@@ -503,11 +511,13 @@ function corps(httpChannel) {
 function listener(event) {
     if (filtreActif) {
         var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-
+        var hôteVisité = new RegExp(context.hôteVisité);
         if (patronLocalhost1.exec(channel.URI.host) ||
             patronLocalhost2.exec(channel.URI.host) ||
             patronReseauLocal.exec(channel.URI.host) ||
-            estUnNomAccepté(channel.URI.host)) {
+            hôteVisité.exec(channel.URI.host) ||
+            estUnNomAccepté(channel.URI.host) ||
+            context.hôteVisité === '') {
             //On installe un écouteur
             var newListener = new TracingListener();
             event.subject.QueryInterface(Ci.nsITraceableChannel);
@@ -574,6 +584,7 @@ function journaliserRequête(channel, status) {
             date: new Date().getTime(),
             fuseau: new Date().getTimezoneOffset(),
             idCorrellation: context.idCorrellation,
+            hôteVisité: context.hôteVisité,
             urlVisitee: context.urlVisitée,
             format: channel.URI.scheme,
             sécurité: channel.URI.securityInfo,

@@ -1,10 +1,5 @@
 self.port.on('nettoyer', function (urlDemandé) {
 
-    var hoteCourant = 'inconnu'
-    if (document.location) {
-        hoteCourant = document.location.host;
-    }
-
     //Attention, des blocs de commentaires peuvent contenir des liens ou du code :
     //Ex : <!--[if lte IE 7]>
     //         <link href="//mozorg.cdn.mozilla.net/media/css/oldIE-bundle.ea7fe0ba08ae.css" rel="stylesheet" type="text/css" />
@@ -31,8 +26,6 @@ self.port.on('nettoyer', function (urlDemandé) {
             $(this).replaceWith("<script></script>");
         }
     });
-
-    self.port.emit('hoteDemandé', hoteCourant);
 });
 
 
