@@ -66,6 +66,9 @@ var préférencesSécurisantes = {
     "media.getusermedia.screensharing.allowed_domains": "",
     "browser.send_pings": false,
     "browser.send_pings.require_same_host": true,
+    "browser.chrome.favicons": false,
+    "browser.shell.shortcutFavicons": false,
+    "browser.chrome.site_icons": false,
     "network.proxy.socks_remote_dns": true,
     "network.dns.disablePrefetch": true,
     "network.prefetch-next": false,
@@ -790,6 +793,12 @@ exports.navigationPrivee = function () {
     prefs.browser.setCharPref('safebrowsing.downloads.remote.url', préférencesSécurisantes['browser.safebrowsing.downloads.remote.url']);
     prefs.browser.setCharPref('safebrowsing.provider.google.lists', préférencesSécurisantes['browser.safebrowsing.provider.google.lists']);
     prefs.devtools.setCharPref('gcli.imgurClientID', préférencesSécurisantes['devtools.gcli.imgurClientID']);
+
+    //Les favicons nuisent à la gestion de l'hôte en cours d'interrogation et donc autorisé par l'utilisateur car cette requête favicon est exécutée
+    //à des moments différents que le chargement normal des pages. Concrètement, une icône reprsentant le site n'apparaît plus sur les onglets.
+    prefs.browser.setBoolPref("chrome.favicons", préférencesSécurisantes["browser.chrome.favicons"]);
+    prefs.browser.setBoolPref("shell.shortcutFavicons", préférencesSécurisantes["browser.shell.shortcutFavicons"]);
+    prefs.browser.setBoolPref("chrome.site_icons", préférencesSécurisantes["browser.chrome.site_icons"]);
 
     prefService.savePrefFile(null);
     notifications.notify({text: 'Aplication des paramètres sécurisés'});

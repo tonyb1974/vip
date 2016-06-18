@@ -5,7 +5,6 @@ var data = require('sdk/self').data;
 var {Hotkey} = require("sdk/hotkeys");
 var notifications = require("sdk/notifications");
 var navigationPrivée = require("sdk/private-browsing");
-var windows = require("sdk/windows").browserWindows;
 var tabs = require("sdk/tabs");
 var tabutils = require('sdk/tabs/utils');
 var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
@@ -23,25 +22,21 @@ var thread = Cc["@mozilla.org/thread-manager;1"].getService(Ci.nsIThreadManager)
 var paramètresSécurisés = false;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 var { viewFor } = require("sdk/view/core");
+var { search } = require("sdk/places/bookmarks");
 
 var context = {
     descriptionHote: '',
     domainesAutorises: [],
     domainesRefusés: [],
     urlVisitée: '',
-    hôteVisité: '',
     idCorrellation: new Date().getTime()
 };
-
-
 
 function respectNavigationPrivée(objet) {
     navigationPublique = !navigationPrivée.isPrivate(objet);
     if (!navigationPublique) {
         notifications.notify({text: 'Navigation privée\n\nDans cette fenêtre et durant toute la durée de la navigation privée, le plugin ViP ne stockera plus les domaines bannis qui n\'étaient pas déjà dans les listes des domaines autorisés ou bannis.'});
-    } else {
-        notifications.notify({text: 'Navigation publique'});
-    }
+    } 
 }
 
 //Ecouter l'appel d'une page par l'utilsateur et non par le système de chargement des sous-ressources d'une page...
@@ -51,7 +46,7 @@ var myListener = {
     QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener"]),
     onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {},
     onLocationChange: function(aProgress, aRequest, aURI, aFlag) {
-        context.hôteVisité = aURI.host;
+        tabs.activeTab.hôteVisité = aURI.host;
         if (context.urlVisitée !== aURI.prePath + aURI.path) {
             context.urlVisitée = aURI.prePath + aURI.path;
             context.idCorrellation = new Date().getTime();
@@ -72,12 +67,16 @@ function addProgressListener(highLevelTab) {
 function removeProgressListener(highLevelTab) {
     var browser = tabutils.getTabBrowserForTab(viewFor(highLevelTab));
     if (browser) {
-        context.hôteVisité='';
         browser.removeProgressListener( myListener );
     }
 }
+tabs[0].hôteVisité = '';
 addProgressListener(tabs[0]);
 
+
+tabs.on('open', function (tab) {
+    tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
+});
 tabs.on('activate', function (tab) {
     addProgressListener(tab)
     respectNavigationPrivée(tab);
@@ -252,7 +251,7 @@ TracingListener.prototype =
                 date: new Date().getTime(),
                 fuseau: new Date().getTimezoneOffset(),
                 idCorrellation: context.idCorrellation,
-                hôteVisité: context.hôteVisité,
+                hôteVisité: tabs.activeTab.hôteVisité,
                 urlVisitee: context.urlVisitée,
                 methode: httpChannel.requestMethod,
                 hote: getHeader(httpChannel, "host"),
@@ -329,6 +328,49 @@ panelMoteurRecherche.port.on("panelClosed", function (adresseMoteurRecherche, mo
         enregistrerNouveauDomaineRefusé(context.domainesRefusés[indexDomaine].hote, context.domainesRefusés[indexDomaine].ip, false/*création*/)
     }
     notifications.notify({text: 'Moteur de recherche activé\n\nAdresse actuellement paramétrée pour ce serveur: ' + elasticURL});
+});
+
+var panelVisiterUneNouvelleAdresse = require("sdk/panel").Panel({
+    width: 600,
+    height: 350,
+    contentURL: data.url("nouvelleAdresse.html"),
+    contentScriptFile: [jquery, jqueryUi, data.url("js/nouvelleAdresse.js")]
+});
+
+panelVisiterUneNouvelleAdresse.on("show", function () {
+    //Affiche un dialogue permettant de saisir une adresse url ou un hôte à visiter
+    var marquesPages = [];
+    search(
+        { query: "" }, {}
+    ).on("end", function (resultats) {
+       for(var indexMarquePage in resultats) {
+           marquesPages.push(resultats[indexMarquePage].url);
+       }
+       panelVisiterUneNouvelleAdresse.port.emit("show", marquesPages);
+    });
+});
+
+panelVisiterUneNouvelleAdresse.port.on("panelClosed", function () {
+    panelVisiterUneNouvelleAdresse.hide();
+});
+
+panelVisiterUneNouvelleAdresse.port.on("adresseChoisie", function (adresseDemandée) {
+    panelVisiterUneNouvelleAdresse.hide();
+    var activeTab = tabs.activeTab;
+    var adresseRetravaillée = adresseDemandée;
+    
+    if (adresseDemandée.startsWith('http') === false) {
+        adresseRetravaillée = 'http://' + adresseDemandée
+    }
+    tabs.open({
+        url: adresseRetravaillée,
+        isPinned: false,
+        onOpen: function onOpen(tab) {
+            tab.hôteVisité = '';
+        }
+    });
+    activeTab.hôteVisité = '';
+    activeTab.close();
 });
 
 var panelDomainesMultiples = require("sdk/panel").Panel({
@@ -473,6 +515,13 @@ var nomMultiplesHotKey = Hotkey({
     }
 });
 
+var nomMultiplesHotKey = Hotkey({
+    combo: 'alt-v',
+    onPress: function () {
+        panelVisiterUneNouvelleAdresse.show();
+    }
+});
+
 chercherDomaines();
 chercherDomainesBannis();
 paramètresSécurisés = sécurisation.navigationPrivee();
@@ -511,31 +560,41 @@ function corps(httpChannel) {
 function listener(event) {
     if (filtreActif) {
         var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-        var hôteVisité = new RegExp(context.hôteVisité);
+        var hôteVisité = new RegExp(tabs.activeTab.hôteVisité);
         if (patronLocalhost1.exec(channel.URI.host) ||
             patronLocalhost2.exec(channel.URI.host) ||
             patronReseauLocal.exec(channel.URI.host) ||
             hôteVisité.exec(channel.URI.host) ||
-            estUnNomAccepté(channel.URI.host) ||
-            context.hôteVisité === '') {
+            hôteVisité.exec('www.' + channel.URI.host) ||
+            estUnNomAccepté(channel.URI.host)) {
+
+
             //On installe un écouteur
             var newListener = new TracingListener();
             event.subject.QueryInterface(Ci.nsITraceableChannel);
             newListener.originalListener = event.subject.setNewListener(newListener);
+            console.error("Dans le contexte " + tabs.activeTab.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
             accepter(channel);
+            //Si l'hôte visité est vide, on accepte le nouvel hôte jusqu'à réinitialisation du tab par l'utilisateur ou un clic souris
+            if (tabs.activeTab.hôteVisité === '') {
+                tabs.activeTab.hôteVisité = channel.URI.host;
+            }
             return;
         } else {
             for (var cpt in context.domainesAutorises) {
                 var expressionRegulière = new RegExp("\w*[\:]{0,1}[\/]{0,2}" + context.domainesAutorises[cpt]._id);
-                if (expressionRegulière.exec(channel.URI.host)) {
+                if (expressionRegulière.exec(channel.URI.host) ||
+                    expressionRegulière.exec('www.' + channel.URI.host)) {
                     var newListener = new TracingListener();
                     event.subject.QueryInterface(Ci.nsITraceableChannel);
                     newListener.originalListener = event.subject.setNewListener(newListener);
+                    console.error("Dans le contexte " + tabs.activeTab.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
                     accepter(channel);
                     return;
                 }
             }
         }
+        console.error("Dans le contexte " + tabs.activeTab.hôteVisité + ' l\'adresse suivante a été bloquée: ' + channel.URI.asciiSpec);
         bloquer(channel);
     }
 }
@@ -565,7 +624,7 @@ function bloquer(channel) {
         context.descriptionHote = channel.URI.host;
         if (navigationPublique) {
             enregistrerNouveauDomaineRefusé(context.descriptionHote);
-            notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote + '\n\nAppuyez sur Alt-d pour autoriser ou refuser de nouveaux domaines.\n\nAppuyez sur Alt-f pour activer ou désactiver le filtrage des sites.'});
+            notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote });
         } else {
             console.info('Hôte bloqué non enregistré (navigation privée): ' + context.descriptionHote);
         }
@@ -584,7 +643,7 @@ function journaliserRequête(channel, status) {
             date: new Date().getTime(),
             fuseau: new Date().getTimezoneOffset(),
             idCorrellation: context.idCorrellation,
-            hôteVisité: context.hôteVisité,
+            hôteVisité: tabs.activeTab.hôteVisité,
             urlVisitee: context.urlVisitée,
             format: channel.URI.scheme,
             sécurité: channel.URI.securityInfo,
