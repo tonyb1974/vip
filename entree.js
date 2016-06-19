@@ -94,7 +94,7 @@ var prefs = prefService
 //Initialisation de la page d'installation
 var panelAide = require("sdk/panel").Panel({
     width: 850,
-    height: 600,
+    height: 670,
     contentURL: data.url("aide.html"),
     contentScriptFile: [jquery, jqueryUi, data.url("js/aide.js")]
 });
