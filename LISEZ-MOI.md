@@ -27,7 +27,7 @@ Cette extension, accepte les noms de domaines, www.les-crises.fr par exemple, sa
 - Si un domaine est connu de l'utilisateur et autorisé par lui, la page originale autorise le chargement de resources et scripts de ce site.
 - Si un domaine est inconnu de l'utilisateur, l'extension bloque la requête et ajoute le domaine en question à la liste des domaines bannis. Une notification système indique à l'utilisateur que des domaines ont été bloqués.
 
-Dû à la problématique de sécurité, ce module amène quelques restrictions d'usage contournées par de nouvelle fonctionnalités plus adaptées à la sécurité recherchée.
+Dû à la problématique de sécurité, ce module amène quelques restrictions d'usage contournées par de nouvelles fonctionnalités plus adaptées à la sécurité recherchée.
 
 Pour expliquer ces contraintes, prenons quelques exemples pour comprendre les différentes options de correction du **mauvais usage** par les sites commerciaux du header HTTP **Access-Control-Allow-Origin**.
 Normalement, à des fins de sécurité, un site A ne peut proposer dans ses pages que des liens vers des ressources ou scripts du domaine A.
@@ -38,7 +38,7 @@ Mais pour **monétiser** votre parcours et pour pouvoir **segmenter les consomma
  - stocker des informations dans des cookies, petits fichiers pouvant contenir des données sur votre navigation, ou le localStorage de votre machine, espace de stockage interrogeable depuis une page html5.
  - d'agréger ces résultats pour en déduire des statistiques, des règles de comportement...
  - ...
- **Exemples de domaines de traçage:**  logc202.xiti.com, www.googleadservices.com,  adnext.fr, ...
+ **Exemples de domaines de traçage:**  **logc202.xiti.com**, **www.googleadservices.com**,  **adnext.fr**, ...
 Par défaut, un navigateur internet n'accepte pas ces liens externes... Sauf avec un header HTTP  **Access-Control-Allow-Origin** permissif.
 Ainsi, une page issue d'un domaine de nom A peut maintenant contenir des liens vers des domaines B et C par exemple. Et c'est ce qui est problématique ...
 
@@ -47,17 +47,17 @@ Eh bien parce que de nombreux sites ont pris pour habitude d'avoir cette protect
  
 1. Certains domaines proposent ainsi des sites ou les pages dynamiques sont séparées des ressources statiques (images, sons, vidéos, feuilles de style, ...)
 Ainsi, un site du domaine A peut aller chercher des ressources ou scripts sur un domaine B appartenant à la même entreprise ou entité pour des raisons techniques mais sans considération pour votre sécurité...
-Exemple: Le site du journal **latribune.fr** dont le nom de domaine est **www.latribune.fr** utilise des liens vers le domaine **static.latribune.fr** pour y chercher ses ressources statiques
+**Exemple:** Le site du journal **latribune.fr** dont le nom de domaine est **www.latribune.fr** utilise des liens vers le domaine **static.latribune.fr** pour y chercher ses ressources statiques
 
 2. Certains domaines incorporent du contenu extérieur mais réellement utile pour rendre un service.
-Exemple: un site du domaine A devra incorporer un lien vers le domaine www.youtube.com pour toutes les vidéos incorporées sur la page.
+**Exemple:** un site du domaine A devra incorporer un lien vers le domaine **www.youtube.com** pour toutes les vidéos incorporées sur la page.
 Encore une fois, ce sont les coûts de stockage et le service rendu qui fait passer votre sécurité au second plan.
 
 Alors comment faire ?
 La liste blanche est-elle suffisante ?
 
 Non, la liste blanche **n'est pas suffisante** pour vous **protéger** et présente le désavantage d'être **fastidieuse** à mettre à jour !
-En effet, si je veux éviter que le site du domaine A ne me piste avec des liens vers le domaine www.facebook.com, il me suffit de ne pas l'ajouter à ma liste.
+En effet, si je veux éviter que le site du domaine A ne me piste avec des liens vers le domaine **www.facebook.com**, il me suffit de ne pas l'ajouter à ma liste.
 Mais si je souhaite réellement utiliser le site facebook, je suis alors obligé de l'ajouter à la liste blanche.
 Je rencontre donc le comportement suivant:
 
@@ -71,26 +71,26 @@ Mais, et c'est là où est la restriction, il n'est pas possible de libérer un 
 
 Ex:
 - certains sites utilisent des requêtes asynchrones et régulières pour charger des morceaux de page. Réinitialiser le domaine autorisé pour laisser le prochain domaine demandé devenir valide peut poser problème. Un appel bloqué auparavant pourrait devenir actif et devenir le seul domaine accessible sur la page... Ce n'est pas ce que l'on veut. 
-- certains autres proposent une icône à dessiner dans l'onglet courant de la page(favicon). Le problème est que le chargement de cette image ne se fait pas forcément dans le même temps que la page prinicpale. Ainsi, une fois réinitialisé le domaine accepté, il le domaine de l'icône est potentiellement positionnée comme unique domaine autorisé...  
+- certains autres proposent une icône à dessiner dans l'onglet courant de la page(favicon). Le problème est que le chargement de cette image ne se fait pas forcément dans le même temps que la page prinicpale. Ainsi, une fois réinitialisé le domaine accepté, le domaine de l'icône est potentiellement positionnée comme unique domaine autorisé...  
  
-La contrainte est donc la suivante: une fois une **premier domaine** saisi pour un **onglet**, **seul** un lien vers vers ce domaine est **accepté** sans recours à la **liste blanche**. il n'est donc **plus possible** de naviguer vers **un autre domaine** qui ne soit pas dans la **liste blanche**.
+La contrainte est donc la suivante: une fois un **premier domaine** saisi pour un **onglet**, **seul** un lien vers vers ce domaine est **accepté** sans recours à la **liste blanche**. il n'est donc **plus possible** de naviguer vers **un autre domaine** qui ne soit pas dans la **liste blanche**.
 
 **Exemples de limitations:**
 
-- **Les liens** dans les **réponses** du moteur de recherche google **ne fonctionneront pas** sans ajouter les sites trouvés à la **liste blanche**...
-La raison à cela est que google, pour intercepter un maximum de choses avant de vous laisser naviguer, **ne vous renvoie pas directement vers le site visé** mais vers **un de ses serveurs**, qui lui, vous redirigera finalement **vers le site cible**.
-L'inconvénient est que le **domaine google** devient alors le domaine **autorisé par défaut du nouvel onglet** et le **site cible reste alors inaccessible** si non présent sur la **liste balnche**.
-- Certains liens d'une page qui pointent **vers un autre domaine** peuvent être ouvert dans une **nouvelle fenêtre** mais pas dans la **page même**.
+- **Les liens** dans les **réponses** du moteur de recherche Google **ne fonctionneront pas** sans ajouter les sites trouvés à la **liste blanche**...
+La raison à cela est que Google, pour intercepter un maximum de choses avant de vous laisser naviguer, **ne vous renvoie pas directement vers le site visé** mais vers **un de ses serveurs**, qui lui, vous redirigera finalement **vers le site cible**.
+L'inconvénient est que le **domaine google** devient alors le domaine **autorisé par défaut du nouvel onglet** et le **site cible reste alors inaccessible** si non présent sur la **liste blanche**.
+- Certains liens d'une page qui pointent **vers un autre domaine** peuvent être ouverts dans une **nouvelle fenêtre** mais pas dans la **page même**.
 
 Pour **tempérer** cette **contrainte forte**, un raccourci **'Alt-v'** permet de saisir une nouvelle adresse à visiter. 
 L'**extension** se chargeant de **supprimer l'onglet courant**, d'en **créer un nouveau** et de considérer le **domaine concerné** comme **autorisé directement** par l'**utilisateur**.
 
 Dernier point, il est recommandé de ne pas mettre d'adresse comme **'www.latribune.fr'** dans les **domaines autorisés** de la **liste blanche** mais d'y mettre plutôt les **domaines annexes** qui permettent leur **fonctionnement** car il sont rarement référencés directement dans les pages des autres sites.
-Exemple: 
+**Exemples:**
 - ne pas mettre **www.latribune.fr** dans la liste blanche mais y mettre **static.latribune.fr**
-- pour youtube, vous serez obligé de mettre **www.youtube.com** dans la liste blanche ainsi que des expressions régulières pour correspondre aux différents nom de domaines annexes comme  **s.ytimg.com**, **s1.ytimg.com**, **s2.ytimg.com**, ...
+- pour **youtube**, vous serez obligé de mettre **www.youtube.com** dans la liste blanche ainsi que des expressions régulières pour correspondre aux différents nom de domaines annexes comme  **s.ytimg.com**, **s1.ytimg.com**, **s2.ytimg.com**, ...
 - ne pas mettre **www.facebook.com** dans la liste blanche mais y mettre **static.xx.fbcdn.net** si vous utilisez réellement ce site
-- Qwant ne se mettant pas en intermédiaire entre l'utilisateur et le site trouvé lors des recherches, il est conseillé de l'utilisé en lieu et place de google. Pour cella, ne pas mettre **qwant.com** dans la liste blanche mais y mettre **api.qwant.com**
+- Qwant ne se mettant pas en intermédiaire entre l'utilisateur et le site trouvé lors des recherches, il est conseillé de l'utiliser en lieu et place de Google. Pour cella, ne pas mettre **qwant.com** dans la liste blanche mais y mettre **api.qwant.com**
 
 La combinaison de touches **'Alt-a'** ou **'Alt-h'** permet à l'utilisateur d'accéder à l'aide en ligne du module
 
