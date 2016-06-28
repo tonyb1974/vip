@@ -372,7 +372,11 @@ Pour reprendre ce module et augmenter son code:
   2. Installer [NodeJs](https://nodejs.org/en/)
   3. Exécuter la commande **'npm install jpm --global'**
   4. Modifier le code à l'aide de votre ide préféré (Netbeans, IntelliJ,...)
-  5. Exécuter le projet en exécutant un **'jpm run'**
+  5. Exécuter le projet en exécutant un **'jpm run'** 
+  6. Création d'un xpi en exécutant **'jpm xpi'**. Attention, l'installation n'est pas possible dans firefox jusqu'à ce que l'une des conditions suivantes soit remplie:
+    - Le plugin est signé par la **fondation Mozilla** après relecture du code
+    - Le plugin est signé par le **développeur**, pour les testeurs en avant-première, mais ne peut être proposé sur le site **'addons.mozilla.org'** car le dévelopeur le distribue lui-même. Pour tester une telle version, il est conseillé de créer un [nouveau profil de test firefox](https://support.mozilla.org/fr/kb/utiliser-gestionnaire-profils-creer-supprimer-profils#w_craeer-un-profil)
+    - le code est exécuté dans le répertoire du projet grâce au script **'vip-dev.sh'** une fois les chemins vers l'exécutable et le profil firefox à utiliser mis à jour.
 
 Voir la documentation [Mozilla Developper Network (MDN)](https://developer.mozilla.org/fr/docs/Mozilla/Add-ons/SDK/Tools/jpm)
 

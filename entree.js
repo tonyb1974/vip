@@ -11,8 +11,6 @@ var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var sécurisation = require('profilSecurite/securisation');
-var filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
-var filtreJavascriptActif = true //Par défaut, le module filtre le javascript inline des pages html chargées.
 var navigationPublique = false;
 var jquery = data.url('js/jquery-2.2.4.min.js');
 var jqueryUi = data.url('js/jquery-ui-1.11.4.min.js');
@@ -71,13 +69,18 @@ function removeProgressListener(highLevelTab) {
     }
 }
 tabs[0].hôteVisité = '';
+tabs[0].filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
+tabs[0].filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
 addProgressListener(tabs[0]);
 
 
 tabs.on('open', function (tab) {
     tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
+    tab.filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
+    tab.filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
 });
 tabs.on('activate', function (tab) {
+    notifications.notify({text: tab.hôteVisité + ' > Filtrage activé: ' + tab.filtreActif + ', filtre javascript activé: ' + tab.filtreJavascriptActif});
     addProgressListener(tab)
     respectNavigationPrivée(tab);
 });
@@ -415,7 +418,7 @@ function alerter(msg) {
 }
 
 var filtreJavascript = function (worker) {
-    if (filtreJavascriptActif) {
+    if (tabs.activeTab.filtreJavascriptActif) {
         worker.port.emit("nettoyer", worker.url);
     } else {
         filtreNeutre(worker);
@@ -468,12 +471,12 @@ var gestionDomainesHotKey = Hotkey({
 var gestionFiltrageHotKey = Hotkey({
     combo: 'alt-f',
     onPress: function () {
-        if (filtreActif) {
+        if (tabs.activeTab.filtreActif) {
             notifications.notify({text: 'Filtrage désactivé\n\nAppuyez sur Alt-f pour réactiver le filtrage des sites.'});
-            filtreActif = false;
+            tabs.activeTab.filtreActif = false;
         } else {
             notifications.notify({text: 'Filtrage activé\n\nAppuyez sur Alt-f pour désactiver le filtrage des sites.'});
-            filtreActif = true;
+            tabs.activeTab.filtreActif = true;
         }
     }
 });
@@ -481,11 +484,11 @@ var gestionFiltrageHotKey = Hotkey({
 var filtreJavascriptHotKey = Hotkey({
     combo: 'alt-j',
     onPress: function () {
-        if (filtreJavascriptActif) {
-            filtreJavascriptActif = false;
+        if (tabs.activeTab.filtreJavascriptActif) {
+            tabs.activeTab.filtreJavascriptActif = false;
             notifications.notify({text: 'Filtrage du javascript \'inline\' désactivé\n\nAppuyez sur Alt-j pour réactiver le filtrage du javascript \'inline\'.'});
         } else {
-            filtreJavascriptActif = true;
+            tabs.activeTab.filtreJavascriptActif = true;
             notifications.notify({text: 'Filtrage du javascript \'inline\' activé\n\nAppuyez sur Alt-j pour désactiver le filtrage du javascript \'inline\'.'});
         }
     }
@@ -558,7 +561,7 @@ function corps(httpChannel) {
 }
 
 function listener(event) {
-    if (filtreActif) {
+    if (tabs.activeTab.filtreActif) {
         var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
         var hôteVisité = new RegExp(tabs.activeTab.hôteVisité);
         if (patronLocalhost1.exec(channel.URI.host) ||
