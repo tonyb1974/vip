@@ -101,10 +101,10 @@ La combinaison de touches **'Alt-e'** permet de passer du mode standard au mode 
 Lors du passage en **mode étendu**, un panneau de configuration permet de saisir l'**adresse url** ainsi que le **port** d'écoute du **moteur de recherche**. Ex : **'http://localhost:9200'**
 Une option permet de demander le stockage des **requêtes bloquées et non bloquées** ainsi que des **réponses reçues(requêtes non bloquées)**.
 
-La combinaison de touches **'Alt-f'** permet d'**activer**/**désactiver** le filtrage des sites.
+La combinaison de touches **'Alt-f'** permet d'**activer**/**désactiver** le filtrage des sites. Fonctionne par onglet.
 > Attention, L'anonymisation du **User-agent**, du **Referer**, la désactivation du **localStorage** et des **scripts** directement inclus dans les pages sont toujours actifs.
 
-La combinaison de touches **'Alt-j'** permet d'**activer**/**désactiver** le filtrage des **scripts** directement inclus dans les pages.
+La combinaison de touches **'Alt-j'** permet d'**activer**/**désactiver** le filtrage des **scripts** directement inclus dans les pages. Fonctionne par onglet.
 
 La combinaison de touches **'Alt-n'** permet de renseigner des **expressions régulières** correspondant à un ensemble de noms de domaine séparées par des points-virgule qui seront ajoutés à la **liste blanche des domaines autorisés**.
 > Ex: Pour le site 'http://www.pagesjaunes.fr/', des noms de domaines de la forme 'static5.pagesjaunes.fr' nécessaires aux ressources statiques sont refusés.
