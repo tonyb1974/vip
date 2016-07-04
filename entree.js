@@ -82,8 +82,23 @@ tabs.on('open', function (tab) {
     tab.filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
     tab.filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
 });
+
+function msgFiltreActif(filtreActif){
+    if (filtreActif) {
+        return ' > Filtre actif';
+    } else {
+        return ' > Filtre inactif';
+    }
+}
+function msgFiltreJavascriptActif(filtreActif){
+    if (filtreActif) {
+        return ' > Filtre javascript actif';
+    } else {
+        return ' > Filtre javascript inactif';
+    }
+}
 tabs.on('activate', function (tab) {
-    notifications.notify({text: tab.hôteVisité + ' > Filtrage activé: ' + tab.filtreActif + ', filtre javascript activé: ' + tab.filtreJavascriptActif});
+    notifications.notify({text: tab.hôteVisité + msgFiltreActif(tab.filtreActif) + msgFiltreJavascriptActif(tab.filtreJavascriptActif)});
     addProgressListener(tab)
     respectNavigationPrivée(tab);
 });
