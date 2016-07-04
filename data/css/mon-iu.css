@@ -23,3 +23,7 @@ body input#fermer {
 .inline {
     display: inline;
 }
+
+.bleu {
+    color: blue;
+}

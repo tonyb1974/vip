@@ -34,7 +34,7 @@ function respectNavigationPrivée(objet) {
     navigationPublique = !navigationPrivée.isPrivate(objet);
     if (!navigationPublique) {
         notifications.notify({text: 'Navigation privée\n\nDans cette fenêtre et durant toute la durée de la navigation privée, le plugin ViP ne stockera plus les domaines bannis qui n\'étaient pas déjà dans les listes des domaines autorisés ou bannis.'});
-    } 
+    }
 }
 
 //Ecouter l'appel d'une page par l'utilsateur et non par le système de chargement des sous-ressources d'une page...
@@ -68,6 +68,7 @@ function removeProgressListener(highLevelTab) {
         browser.removeProgressListener( myListener );
     }
 }
+tabs[0].domainesRefusés=[];
 tabs[0].hôteVisité = '';
 tabs[0].filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
 tabs[0].filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
@@ -75,6 +76,7 @@ addProgressListener(tabs[0]);
 
 
 tabs.on('open', function (tab) {
+    tab.domainesRefusés=[];
     tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
     tab.filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
     tab.filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
@@ -96,8 +98,8 @@ var prefs = prefService
 
 //Initialisation de la page d'installation
 var panelAide = require("sdk/panel").Panel({
-    width: 850,
-    height: 670,
+    width: 900,
+    height: 690,
     contentURL: data.url("aide.html"),
     contentScriptFile: [jquery, jqueryUi, data.url("js/aide.js")]
 });
@@ -288,15 +290,31 @@ var panel = require("sdk/panel").Panel({
     contentURL: data.url("gestionDomaines.html"),
     contentScriptFile: [jquery, jqueryUi, data.url('js/gestionDomaines.js')]
 });
+var panelOnglet = require("sdk/panel").Panel({
+    width: 500,
+    height: 700,
+    contentURL: data.url("gestionDomaines.html"),
+    contentScriptFile: [jquery, jqueryUi, data.url('js/gestionDomaines.js')]
+});
 
 panel.on("show", function () {
     //Passe la main au module gestionDomaines.js en lui envoyant le message 'show'
     panel.port.emit("show", context.domainesAutorises, context.domainesRefusés);
 });
 
+panelOnglet.on("show", function () {
+    //Passe la main au module gestionDomaines.js en lui envoyant le message 'show'
+    panelOnglet.port.emit("show", context.domainesAutorises, tabs.activeTab.domainesRefusés);
+});
+
 //Le bouton de fermeture du panneau de gestion des domaines a été clické
 panel.port.on("panelClosed", function () {
     panel.hide();
+});
+
+//Le bouton de fermeture du panneau de gestion des domaines a été clické
+panelOnglet.port.on("panelClosed", function () {
+    panelOnglet.hide();
 });
 
 //Définition d'un panneau de configuration du moteur de recherche Alt-E
@@ -312,7 +330,7 @@ panelMoteurRecherche.on("show", function () {
     panelMoteurRecherche.port.emit("show", elasticURL, modeEtenduElastic);
 });
 
-//Le bouton de fermeture du panneau de gestion des domaines a été clické
+//Le bouton de fermeture du panneau de gestion des domaines a été sélectionné
 panelMoteurRecherche.port.on("panelClosed", function (adresseMoteurRecherche, modeEtendu) {
     panelMoteurRecherche.hide();
 
@@ -361,7 +379,7 @@ panelVisiterUneNouvelleAdresse.port.on("adresseChoisie", function (adresseDemand
     panelVisiterUneNouvelleAdresse.hide();
     var activeTab = tabs.activeTab;
     var adresseRetravaillée = adresseDemandée;
-    
+
     if (adresseDemandée.startsWith('http') === false) {
         adresseRetravaillée = 'http://' + adresseDemandée
     }
@@ -465,6 +483,13 @@ var gestionDomainesHotKey = Hotkey({
     combo: 'alt-d',
     onPress: function () {
         panel.show();
+    }
+});
+
+var gestionDomainesHotKey = Hotkey({
+    combo: 'alt-o',
+    onPress: function () {
+        panelOnglet.show();
     }
 });
 
@@ -749,17 +774,27 @@ function chercherDomainesBannis(silencieux) {
     }
 }
 
+function filtrerDomainesRefusés(hote) {
+    for (var domaineIndex in context.domainesRefusés) {
+        if (context.domainesRefusés[domaineIndex]._id === hote) {
+            context.domainesRefusés.splice(domaineIndex, 1);
+            break;
+        }
+    }
+    for (var domaineIndex2 in tabs.activeTab.domainesRefusés) {
+        if (tabs.activeTab.domainesRefusés[domaineIndex2]._id === hote) {
+            tabs.activeTab.domainesRefusés.splice(domaineIndex2, 1);
+            break;
+        }
+    }
+}
+
 function enregistrerNouveauDomaine(hote, ip, création) {
 
     if (modeSimple) {
         var domaine = {_id: hote, _source: {ip: ip}};
         context.domainesAutorises.push(domaine);
-        for (var domaineIndex in context.domainesRefusés) {
-            if (context.domainesRefusés[domaineIndex]._id === hote) {
-                context.domainesRefusés.splice(domaineIndex, 1);
-                break;
-            }
-        }
+        filtrerDomainesRefusés(hote);
     } else {
         var documentHote = {
             date: new Date().getTime(),
@@ -785,12 +820,7 @@ function enregistrerNouveauDomaine(hote, ip, création) {
                     }
                 } else {
                     context.domainesAutorises.push({_id: hote, _source: {ip: ip}});
-                    for (var domaineIndex in context.domainesRefusés) {
-                        if (context.domainesRefusés[domaineIndex]._id === hote) {
-                            context.domainesRefusés.splice(domaineIndex, 1);
-                            break;
-                        }
-                    }
+                    filtrerDomainesRefusés(hote);
                 }
             },
             anonymous: true
@@ -798,10 +828,7 @@ function enregistrerNouveauDomaine(hote, ip, création) {
     }
 }
 
-//Le champ de recherche du panneau de gestion des domaines contient un nouveau texte
-panel.port.on("hoteAjouté", function (hote, ip) {
-    console.info('Recherche en cours... == >' + hote);
-
+function ajouterHote(hote, ip) {
     var ecouteurDNS = {
         onLookupComplete: function (request, record, status) {
             if (!(status & 0x80000000) === 0) {
@@ -834,6 +861,13 @@ panel.port.on("hoteAjouté", function (hote, ip) {
         }
     };
     dnsService.asyncResolve(hote, 0, ecouteurDNS, thread);
+}
+//Le champ de recherche du panneau de gestion des domaines contient un nouveau texte
+panel.port.on("hoteAjouté", function (hote, ip) {
+    ajouterHote(hote, ip);
+});
+panelOnglet.port.on("hoteAjouté", function (hote, ip) {
+    ajouterHote(hote, ip);
 });
 
 
@@ -842,6 +876,7 @@ function enregistrerNouveauDomaineRefusé(hote, ip, création) {
     if (modeSimple) {
         var domaine = {_id: hote, _source: {ip: ip}};
         context.domainesRefusés.push(domaine);
+        tabs.activeTab.domainesRefusés.push(domaine);
     } else {
         var documentHote = {
             date: new Date().getTime(),
@@ -868,6 +903,7 @@ function enregistrerNouveauDomaineRefusé(hote, ip, création) {
                 } else {
                     console.info("Enregistrement hôte banni ok !");
                     context.domainesRefusés.push({_id: hote, _source: {ip: ip}});
+                    tabs.activeTab.domainesRefusés.push({_id: hote, _source: {ip: ip}});
                 }
             },
             anonymous: true
@@ -875,8 +911,7 @@ function enregistrerNouveauDomaineRefusé(hote, ip, création) {
     }
 }
 
-panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
-
+function supprimerHote(hoteSupprimé, ip) {
     for (var domaineIndex in context.domainesAutorises) {
         if (context.domainesAutorises[domaineIndex]._id === hoteSupprimé) {
             var indexSauvegardé = domaineIndex;
@@ -904,6 +939,12 @@ panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
             }
         }
     }
+}
+panel.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
+    supprimerHote(hoteSupprimé, ip);
+});
+panelOnglet.port.on("hoteSupprimé", function (hoteSupprimé, ip) {
+    supprimerHote(hoteSupprimé, ip);
 });
 
 

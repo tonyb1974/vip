@@ -97,6 +97,9 @@ La combinaison de touches **'Alt-a'** ou **'Alt-h'** permet à l'utilisateur d'a
 La combinaison de touches **'Alt-d'** permet à l'utilisateur de voir les domaines autorisés et les domaines bannis.
 Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni aux domaines autorisés.
 
+La combinaison de touches **'Alt-o'** permet à l'utilisateur de voir les domaines autorisés et les domaines bannis dans le contexte de l'onglet actif pour permettre un accès plus rapide aux informations bloquées depuis un site donné.
+Il peut également choisir de bannir un domaine connu ou d'ajouter un domaine banni aux domaines autorisés.
+
 La combinaison de touches **'Alt-e'** permet de passer du mode standard au mode étendu avec un moteur de recherche **Elasticsearch**
 Lors du passage en **mode étendu**, un panneau de configuration permet de saisir l'**adresse url** ainsi que le **port** d'écoute du **moteur de recherche**. Ex : **'http://localhost:9200'**
 Une option permet de demander le stockage des **requêtes bloquées et non bloquées** ainsi que des **réponses reçues(requêtes non bloquées)**.
