@@ -10,6 +10,8 @@ var tabutils = require('sdk/tabs/utils');
 var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
+var adresseMaj = new RegExp('\w*[\:]{0,1}[\/]{0,2}aus5.mozilla.org.*');
+var adresseOcsp = new RegExp('\w*[\:]{0,1}[\/]{0,2}ocsp.*');
 var sécurisation = require('profilSecurite/securisation');
 var navigationPublique = false;
 var jquery = data.url('js/jquery-2.2.4.min.js');
@@ -591,7 +593,9 @@ function listener(event) {
             accepter(channel);
             //Si l'hôte visité est vide, on accepte le nouvel hôte jusqu'à réinitialisation du tab par l'utilisateur ou un clic souris
             if (tabs.activeTab.hôteVisité === '') {
-                tabs.activeTab.hôteVisité = channel.URI.host;
+                    if(!adresseOcsp.exec(channel.URI.host) && !adresseMaj.exec(channel.URI.host)) { // Si ocsp ou update, on enregistre pas comme adresse demandée par l'utilisateur...
+                        tabs.activeTab.hôteVisité = channel.URI.host;
+                    }
             }
             return;
         } else {
