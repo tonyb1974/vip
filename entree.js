@@ -413,7 +413,7 @@ function alerter(msg) {
     alerteErreur.show();
 }
 
-var filtreJavascript = function () {
+var filtreJavascript = function (worker) {
     if (tabs.activeTab.filtreJavascriptActif) {
         worker.port.emit("nettoyer");
     } else {
