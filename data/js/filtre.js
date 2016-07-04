@@ -1,4 +1,4 @@
-self.port.on('nettoyer', function (urlDemandé) {
+self.port.on('nettoyer', function () {
 
     //Attention, des blocs de commentaires peuvent contenir des liens ou du code :
     //Ex : <!--[if lte IE 7]>
@@ -26,6 +26,15 @@ self.port.on('nettoyer', function (urlDemandé) {
             $(this).replaceWith("<script></script>");
         }
     });
+});
+
+self.port.on('localStorage', function () {
+    if (localStorage) {
+        localStorage.clear();
+    }
+    if (window.localStorage) {
+        window.localStorage.clear();
+    }
 });
 
 

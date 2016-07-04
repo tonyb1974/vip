@@ -154,7 +154,7 @@ var préférencesSécurisantes = {
     "dom.disable_window_open_feature.location": true,
     "dom.disable_window_open_feature.resizable": true,
     "dom.disable_window_open_feature.status": true,
-    "dom.storage.enabled": false,
+    "dom.storage.enabled": true,
     "browser.newtab.preload": false,
     "browser.newtab.url": "about:blank",
     "browser.newtabpage.directory.ping": "",

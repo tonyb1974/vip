@@ -74,7 +74,6 @@ tabs[0].filtreActif = true; //Par défaut, le module filtre les domaines qui ne 
 tabs[0].filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
 addProgressListener(tabs[0]);
 
-
 tabs.on('open', function (tab) {
     tab.domainesRefusés=[];
     tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
@@ -208,40 +207,17 @@ function enregistrerReponse(reponse) {
 
 function TracingListener() {
     this.originalListener = null;
-    this.receivedData = [];   // array for incoming data.
 }
 
 TracingListener.prototype =
 {
     onDataAvailable: function (request, context, inputStream, offset, count) {
 
-        /*if (nestPasUnAppelElastic(request) === true ) {
-         console.info('############################### ', request.URI.path);
-         var binaryInputStream = Cc["@mozilla.org/binaryinputstream;1"].createInstance(Ci.nsIBinaryInputStream);
-         var storageStream = Cc["@mozilla.org/storagestream;1"].createInstance(Ci.nsIStorageStream);
-         var binaryOutputStream = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(Ci.nsIBinaryOutputStream);
-
-         binaryInputStream.setInputStream(inputStream);
-         storageStream.init(8192, count, null);
-         binaryOutputStream.setOutputStream(storageStream.getOutputStream(0));
-
-         // Copy received data as they come.
-         var data = binaryInputStream.readBytes(count);
-         console.info(data);
-         this.receivedData.push(data);
-
-         binaryOutputStream.writeBytes(data, count);
-
-         this.originalListener.onDataAvailable(request, context,
-         storageStream.newInputStream(0), offset, count);
-         } else {*/
         if (!this.startTime) {
             this.startTime = new Date().getTime();
         }
         this.originalListener.onDataAvailable(request, context,
             inputStream, offset, count);
-
-        /*}*/
     },
 
     onStartRequest: function (request, context) {
@@ -435,12 +411,15 @@ function alerter(msg) {
     alerteErreur.show();
 }
 
-var filtreJavascript = function (worker) {
+var filtreJavascript = function () {
     if (tabs.activeTab.filtreJavascriptActif) {
-        worker.port.emit("nettoyer", worker.url);
+        worker.port.emit("nettoyer");
     } else {
         filtreNeutre(worker);
     }
+}
+var viderLocalStorage = function (worker) {
+    worker.port.emit("localStorage");
 }
 
 var filtreNeutre = function(worker) {
@@ -452,6 +431,13 @@ var moduleFiltrant = pageMod.PageMod({
     contentScriptFile: [data.url('js/filtre.js'), jquery],
     contentScriptWhen: "ready",
     onAttach: filtreJavascript
+});
+
+var moduleFiltrant = pageMod.PageMod({
+    include: "*",
+    contentScriptFile: [data.url('js/filtre.js'), jquery],
+    contentScriptWhen: "end",
+    onAttach: viderLocalStorage
 });
 
 var aideHotKey = Hotkey({
