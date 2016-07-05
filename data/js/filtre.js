@@ -9,6 +9,25 @@ self.port.on('nettoyer', function () {
         return element.nodeType == 8;
     };
 
+    //Pour que les utilisateurs google puisse l'utiliser avec ce plugin tout en conservant un minimum de vie privée ;-)
+    if(document.location.host.startsWith('www.google.')){
+        var googleTranslate = function(index, element) {
+            var params = $(element).attr('href').split('&');
+            if (params[0]) {
+                var urlGoogle = params[0].split('q=');
+                if (urlGoogle) {
+                    var urlRéèlle = urlGoogle[urlGoogle.length - 1].split(':');
+                    if (urlRéèlle) {
+                        $(element).attr('href', urlRéèlle[urlRéèlle.length - 1 ]);
+                    } else {
+                        $(element).attr('href', urlGoogle[urlGoogle.length - 1]);
+                    }
+                }
+            }
+        }
+        $("a[href^='/url']").each(googleTranslate);
+    }
+
     var inhiber = function (index, element) {
         element.nodeValue = "#";
     };
