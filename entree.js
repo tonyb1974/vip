@@ -77,8 +77,10 @@ tabs[0].filtreJavascriptActif = true; //Par défaut, le module filtre le javascr
 addProgressListener(tabs[0]);
 
 tabs.on('open', function (tab) {
-    tab.domainesRefusés=[];
     tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
+    context.ongletOuvertALinstant  = tab;
+    tab.activate();
+    tab.domainesRefusés=[];
     tab.filtreActif = true; //Par défaut, le module filtre les domaines qui ne sont pas dans la liste blanche
     tab.filtreJavascriptActif = true; //Par défaut, le module filtre le javascript inline des pages html chargées.
 });
@@ -589,9 +591,15 @@ function corps(httpChannel) {
 }
 
 function listener(event) {
-    if (tabs.activeTab.filtreActif) {
+
+    var onglet = tabs.activeTab;
+    if (context.ongletOuvertALinstant) {
+        onglet = context.ongletOuvertALinstant;
+        delete context.ongletOuvertALinstant;
+    }
+    if (onglet.filtreActif) {
         var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-        var hôteVisité = new RegExp(tabs.activeTab.hôteVisité);
+        var hôteVisité = new RegExp(onglet.hôteVisité);
         if (patronLocalhost1.exec(channel.URI.host) ||
             patronLocalhost2.exec(channel.URI.host) ||
             patronReseauLocal.exec(channel.URI.host) ||
@@ -599,17 +607,16 @@ function listener(event) {
             hôteVisité.exec('www.' + channel.URI.host) ||
             estUnNomAccepté(channel.URI.host)) {
 
-
             //On installe un écouteur
             var newListener = new TracingListener();
             event.subject.QueryInterface(Ci.nsITraceableChannel);
             newListener.originalListener = event.subject.setNewListener(newListener);
-            console.error("Dans le contexte " + tabs.activeTab.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
-            accepter(channel);
+            console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
+            accepter(channel, onglet);
             //Si l'hôte visité est vide, on accepte le nouvel hôte jusqu'à réinitialisation du tab par l'utilisateur ou un clic souris
-            if (tabs.activeTab.hôteVisité === '') {
+            if (onglet.hôteVisité === '') {
                     if(!adresseOcsp.exec(channel.URI.host) && !adresseMaj.exec(channel.URI.host)) { // Si ocsp ou update, on enregistre pas comme adresse demandée par l'utilisateur...
-                        tabs.activeTab.hôteVisité = channel.URI.host;
+                        onglet.hôteVisité = channel.URI.host;
                     }
             }
             return;
@@ -621,18 +628,18 @@ function listener(event) {
                     var newListener = new TracingListener();
                     event.subject.QueryInterface(Ci.nsITraceableChannel);
                     newListener.originalListener = event.subject.setNewListener(newListener);
-                    console.error("Dans le contexte " + tabs.activeTab.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
-                    accepter(channel);
+                    console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
+                    accepter(channel, onglet);
                     return;
                 }
             }
         }
-        console.error("Dans le contexte " + tabs.activeTab.hôteVisité + ' l\'adresse suivante a été bloquée: ' + channel.URI.asciiSpec);
-        bloquer(channel);
+        console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été bloquée: ' + channel.URI.asciiSpec);
+        bloquer(channel, onglet);
     }
 }
 
-function accepter(channel) {
+function accepter(channel, onglet) {
     if (navigationPublique) {
         journaliserRequête(channel, true);
     }
@@ -643,10 +650,12 @@ function accepter(channel) {
     channel.setRequestHeader("Host", channel.URI.host, false);
 }
 
-function bloquer(channel) {
+function bloquer(channel, onglet) {
     channel.cancel(0x804B0002); //On annule la requête avec un NS_BINDING_ERROR
 
     var trouve = false;
+    //Quelquesoit le cas, on enregistre le blocage sur l'onglet courant
+    enregistrerDomaineRefuséParOnglet(channel.URI.host, null, onglet);
     for (var domaine in context.domainesRefusés) {
         if (context.domainesRefusés[domaine]._id === channel.URI.host) {
             trouve = true;
@@ -656,27 +665,27 @@ function bloquer(channel) {
     if (trouve === false) {
         context.descriptionHote = channel.URI.host;
         if (navigationPublique) {
-            enregistrerNouveauDomaineRefusé(context.descriptionHote);
+            enregistrerNouveauDomaineRefusé(context.descriptionHote, null, false);
             notifications.notify({text: 'Hôte bloqué: ' + context.descriptionHote });
         } else {
-            console.info('Hôte bloqué non enregistré (navigation privée): ' + context.descriptionHote);
+            notifications.notify({text: 'Hôte bloqué non enregistré (navigation privée): ' + context.descriptionHote });
         }
     }
 
     //Pour éviter de journaliser le user-agent
     channel.setRequestHeader("User-Agent", 0, false);
     if (navigationPublique) {
-        journaliserRequête(channel, false);
+        journaliserRequête(channel, false, onglet);
     }
 }
 
-function journaliserRequête(channel, status) {
+function journaliserRequête(channel, status, onglet) {
     if (!modeSimple && navigationPublique && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
         var requête = {
             date: new Date().getTime(),
             fuseau: new Date().getTimezoneOffset(),
             idCorrellation: context.idCorrellation,
-            hôteVisité: tabs.activeTab.hôteVisité,
+            hôteVisité: onglet.hôteVisité,
             urlVisitee: context.urlVisitée,
             format: channel.URI.scheme,
             sécurité: channel.URI.securityInfo,
@@ -786,10 +795,12 @@ function filtrerDomainesRefusés(hote) {
             break;
         }
     }
-    for (var domaineIndex2 in tabs.activeTab.domainesRefusés) {
-        if (tabs.activeTab.domainesRefusés[domaineIndex2]._id === hote) {
-            tabs.activeTab.domainesRefusés.splice(domaineIndex2, 1);
-            break;
+    for (var indexOnglet in tabs) {
+        for (var domaineIndex2 in tabs[indexOnglet].domainesRefusés) {
+            if (tabs[indexOnglet].domainesRefusés[domaineIndex2]._id === hote) {
+                tabs[indexOnglet].domainesRefusés.splice(domaineIndex2, 1);
+                break;
+            }
         }
     }
 }
@@ -815,13 +826,10 @@ function enregistrerNouveauDomaine(hote, ip, création) {
             content: JSON.stringify(documentHote),
             contentType: 'application/json',
             onComplete: function (response) {
-                console.info("Enregistrement hôte autorisé...", hote);
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
                         alerter('Impossible d\'indexer le nouveau domaine.');
                         console.error('Erreur', response.status, response.statusText, '=> Impossible d\'enregistrer le domaine suivant:', hote, 'ip=', ip);
-                    } else {
-                        console.info('Document déjà autorisé:', hote);
                     }
                 } else {
                     context.domainesAutorises.push({_id: hote, _source: {ip: ip}});
@@ -853,11 +861,9 @@ function ajouterHote(hote, ip) {
                     url: elasticURL + "/domaines_bannis/hote/" + hote,
                     contentType: 'application/json',
                     onComplete: function (response) {
-                        console.info("Suppression hôte banni...");
                         if (response.status !== 404 && (response.status < 200 || response.status >= 300)) {
                             //Echoue silencieusement
                         }
-                        console.info("Suppression hôte banni ok !");
                         enregistrerNouveauDomaine(hote, record.getNextAddrAsString());
                     },
                     anonymous: true
@@ -875,13 +881,34 @@ panelOnglet.port.on("hoteAjouté", function (hote, ip) {
     ajouterHote(hote, ip);
 });
 
-
+function ajoutDomaineRefuséSiNonRéférencé(hote, ip, onglet) {
+    if(onglet){
+        var trouvé = false;
+        for (indexDomaine in onglet.domainesRefusés) {
+            if (onglet.domainesRefusés[indexDomaine]._id === hote) {
+                trouvé = true;
+                break;
+            }
+        }
+        if (trouvé === false) {
+            onglet.domainesRefusés.push({_id: hote, _source: {ip: ip}});
+        }
+    }
+}
+function enregistrerDomaineRefuséParOnglet(hote, ip, onglet) {
+    if (onglet) {
+        for (indexOnglet in tabs) {
+            if (onglet.hôteVisité === '' || tabs[indexOnglet].hôteVisité === onglet.hôteVisité) {
+                ajoutDomaineRefuséSiNonRéférencé(hote, ip, tabs[indexOnglet]);
+            }
+        }
+    }
+}
 function enregistrerNouveauDomaineRefusé(hote, ip, création) {
 
     if (modeSimple) {
         var domaine = {_id: hote, _source: {ip: ip}};
         context.domainesRefusés.push(domaine);
-        tabs.activeTab.domainesRefusés.push(domaine);
     } else {
         var documentHote = {
             date: new Date().getTime(),
@@ -897,7 +924,6 @@ function enregistrerNouveauDomaineRefusé(hote, ip, création) {
             content: JSON.stringify(documentHote),
             contentType: 'application/json',
             onComplete: function (response) {
-                console.info("Enregistrement hôte banni...", hote);
                 if (response.status < 200 || response.status >= 300) {
                     if (response.status !== 409) {
                         alerter('Impossible d\'indexer le nouveau domaine.');
@@ -906,9 +932,7 @@ function enregistrerNouveauDomaineRefusé(hote, ip, création) {
                         console.error('Document déjà banni:', hote);
                     }
                 } else {
-                    console.info("Enregistrement hôte banni ok !");
                     context.domainesRefusés.push({_id: hote, _source: {ip: ip}});
-                    tabs.activeTab.domainesRefusés.push({_id: hote, _source: {ip: ip}});
                 }
             },
             anonymous: true
@@ -921,7 +945,7 @@ function supprimerHote(hoteSupprimé, ip) {
         if (context.domainesAutorises[domaineIndex]._id === hoteSupprimé) {
             var indexSauvegardé = domaineIndex;
             if (modeSimple) {
-                enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
+                enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip, false);
                 context.domainesAutorises.splice(indexSauvegardé, 1);
                 prefs.setCharPref("hôtes_acceptés", JSON.stringify({domainesAutorises: context.domainesAutorises}));
                 prefService.savePrefFile(null);
@@ -930,12 +954,11 @@ function supprimerHote(hoteSupprimé, ip) {
                     url: elasticURL + "/domaines/hote/" + hoteSupprimé,
                     contentType: 'application/json',
                     onComplete: function (response) {
-                        console.info("Suppression...", hoteSupprimé);
                         if (response.status !== 404 && (response.status < 200 || response.status >= 300)) { //404 ignoré
                             alerter('Impossible d\'indexer le nouveau domaine.');
                             console.error('Erreur', response.status, response.statusText, '=> Impossible de supprimer le domaine suivant: ' + hoteSupprimé);
                         } else {
-                            enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip);
+                            enregistrerNouveauDomaineRefusé(hoteSupprimé, context.domainesAutorises[indexSauvegardé]._source.ip, false);
                             context.domainesAutorises.splice(indexSauvegardé, 1);
                         }
                     },
