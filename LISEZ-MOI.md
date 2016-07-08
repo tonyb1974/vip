@@ -169,6 +169,7 @@ curl -XPUT http://localhost:9200/domaines -d '{
       }
     }
   }
+}
 ```
 
 Installation d'un index de recherche des domaines bannis:
@@ -196,6 +197,7 @@ curl -XPUT http://localhost:9200/domaines_bannis -d '{
       }
     }
   }
+}
 ```
 
 Installation d'un index pour les requêtes et réponses:

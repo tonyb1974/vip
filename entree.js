@@ -12,6 +12,7 @@ var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var adresseMaj = new RegExp('\w*[\:]{0,1}[\/]{0,2}aus5.mozilla.org.*');
 var adresseOcsp = new RegExp('\w*[\:]{0,1}[\/]{0,2}ocsp.*');
+//var patronReferer = new RegExp('http[s]{0,1}[\:]{0,1}[\/]{0,2}([a-z|A-Z|\.|\\-|\_]*)[\/]{0,1}.*');
 var sécurisation = require('profilSecurite/securisation');
 var navigationPublique = false;
 var jquery = data.url('js/jquery-2.2.4.min.js');
@@ -25,6 +26,7 @@ var { viewFor } = require("sdk/view/core");
 var { search } = require("sdk/places/bookmarks");
 
 var context = {
+    ongletOuvertALinstant: tabs[0],
     descriptionHote: '',
     domainesAutorises: [],
     domainesRefusés: [],
@@ -46,7 +48,6 @@ var myListener = {
     QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener"]),
     onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) {},
     onLocationChange: function(aProgress, aRequest, aURI, aFlag) {
-        tabs.activeTab.hôteVisité = aURI.host;
         if (context.urlVisitée !== aURI.prePath + aURI.path) {
             context.urlVisitée = aURI.prePath + aURI.path;
             context.idCorrellation = new Date().getTime();
@@ -77,6 +78,7 @@ tabs[0].filtreJavascriptActif = true; //Par défaut, le module filtre le javascr
 addProgressListener(tabs[0]);
 
 tabs.on('open', function (tab) {
+    console.error('open url:' + tab.url);
     tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
     context.ongletOuvertALinstant  = tab;
     tab.activate();
@@ -105,7 +107,14 @@ tabs.on('activate', function (tab) {
     respectNavigationPrivée(tab);
 });
 tabs.on('deactivate', function (tab) {
+    context.ongletPrécédent = tab;
     removeProgressListener(tab);
+});
+
+tabs.on('ready', function (tab) {
+    if (tab === context.ongletOuvertALinstant) {
+        delete context.ongletOuvertALinstant;
+    }
 });
 //Fin d'écoute utilisateur
 
@@ -200,8 +209,8 @@ function nouvellePréférenceBooléennePourNouvelleVersion(nomPref, valeur) {
 }
 
 function nestPasUnAppelElastic(request) {
-    var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
-    return (httpChannel.URI.path !== '/requetes/requete' && httpChannel.URI.path !== '/requetes/reponse' && httpChannel.URI.port !== elasticPort);
+    //var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
+    return (request.URI.path !== '/requetes/requete' && request.URI.path !== '/requetes/reponse' && request.URI.port !== elasticPort);
 }
 
 //Ecoute des réponses
@@ -341,7 +350,7 @@ panelMoteurRecherche.port.on("panelClosed", function (adresseMoteurRecherche, mo
         enregistrerNouveauDomaine(context.domainesAutorises[indexDomaine].hote, context.domainesAutorises[indexDomaine].ip, false/*création*/)
     }
     for (var indexDomaineBanni in context.domainesRefusés) {
-        enregistrerNouveauDomaineRefusé(context.domainesRefusés[indexDomaine].hote, context.domainesRefusés[indexDomaine].ip, false/*création*/)
+        enregistrerNouveauDomaineRefusé(context.domainesRefusés[indexDomaineBanni].hote, context.domainesRefusés[indexDomaineBanni].ip, false/*création*/)
     }
     notifications.notify({text: 'Moteur de recherche activé\n\nAdresse actuellement paramétrée pour ce serveur: ' + elasticURL});
 });
@@ -541,6 +550,12 @@ var modeEtenduHotKey = Hotkey({
     }
 });
 
+var modeEtenduHotKey = Hotkey({
+    combo: 'alt-q',
+    onPress: function () {
+        notifications.notify({text: 'Hôte actuel pour l\'onglet courant: ' + tabs.activeTab.hôteVisité});
+    }
+});
 var nomMultiplesHotKey = Hotkey({
     combo: 'alt-n',
     onPress: function () {
@@ -591,57 +606,94 @@ function corps(httpChannel) {
 }
 
 function listener(event) {
-
     var onglet = tabs.activeTab;
+    //var nouvelOnglet =false;
     if (context.ongletOuvertALinstant) {
         onglet = context.ongletOuvertALinstant;
+        //nouvelOnglet = true;
         delete context.ongletOuvertALinstant;
     }
-    if (onglet.filtreActif) {
-        var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-        var hôteVisité = new RegExp(onglet.hôteVisité);
-        if (patronLocalhost1.exec(channel.URI.host) ||
-            patronLocalhost2.exec(channel.URI.host) ||
-            patronReseauLocal.exec(channel.URI.host) ||
-            hôteVisité.exec(channel.URI.host) ||
-            hôteVisité.exec('www.' + channel.URI.host) ||
-            estUnNomAccepté(channel.URI.host)) {
 
-            //On installe un écouteur
-            var newListener = new TracingListener();
-            event.subject.QueryInterface(Ci.nsITraceableChannel);
-            newListener.originalListener = event.subject.setNewListener(newListener);
-            console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
-            accepter(channel, onglet);
-            //Si l'hôte visité est vide, on accepte le nouvel hôte jusqu'à réinitialisation du tab par l'utilisateur ou un clic souris
-            if (onglet.hôteVisité === '') {
-                    if(!adresseOcsp.exec(channel.URI.host) && !adresseMaj.exec(channel.URI.host)) { // Si ocsp ou update, on enregistre pas comme adresse demandée par l'utilisateur...
+    if (onglet.filtreActif) {
+
+        var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
+       /* var referer;
+        try {
+            referer = channel.getRequestHeader("Referer");
+        } catch (error) {
+            //nous avons affaire à une saisie utilisateur directe.
+        }
+        var hôteVisité = new RegExp(onglet.hôteVisité);
+
+        if (referer) {
+            var domaineReferer = patronReferer.exec(referer);
+            console.error('referer initial:' + referer +' regexp resultat:' + domaineReferer);
+        }
+        if (domaineReferer) {
+            console.error('referer: ' + domaineReferer[1] + ', hv: ' + onglet.hôteVisité + '.');
+        }
+
+            console.error('hv activetab:' + tabs.activeTab.hôteVisité);
+            console.error('hv onglet:' + onglet.hôteVisité);
+
+*/
+            /* ((!nouvelOnglet && domaineReferer && domaineReferer[1] === onglet.hôteVisité) ||
+             (!nouvelOnglet && !domaineReferer)||
+             (nouvelOnglet))*/
+            //((/*(!nouvelOnglet || nouvelOnglet) && */domaineReferer && domaineReferer[1] === onglet.hôteVisité && onglet.hôteVisité === '') ||
+            /*!nouvelOnglet &&*/ //!domaineReferer)||
+            //(nouvelOnglet && domaineReferer && domaineReferer[1] === tabs.activeTab.hôteVisité && onglet.hôteVisité === '')
+            //nouvelOnglet)
+            //&&
+            var hôteVisité = new RegExp(onglet.hôteVisité);
+            if (
+
+                (patronLocalhost1.exec(channel.URI.host) ||
+                patronLocalhost2.exec(channel.URI.host) ||
+                patronReseauLocal.exec(channel.URI.host) ||
+                hôteVisité.exec(channel.URI.host) ||
+                hôteVisité.exec('www.' + channel.URI.host) ||
+                estUnNomAccepté(channel.URI.host))) {
+
+                //On installe un écouteur
+                var newListener = new TracingListener();
+                event.subject.QueryInterface(Ci.nsITraceableChannel);
+                newListener.originalListener = event.subject.setNewListener(newListener);
+
+                if (onglet.hôteVisité === '') { //Si l'hôte visité est vide, on accepte le nouvel hôte jusqu'à réinitialisation du tab par l'utilisateur ou un clic souris
+                    if (!adresseOcsp.exec(channel.URI.host) && !adresseMaj.exec(channel.URI.host)) { // Si ocsp ou update, on enregistre pas comme adresse demandée par l'utilisateur...
                         onglet.hôteVisité = channel.URI.host;
                     }
-            }
-            return;
-        } else {
-            for (var cpt in context.domainesAutorises) {
-                var expressionRegulière = new RegExp("\w*[\:]{0,1}[\/]{0,2}" + context.domainesAutorises[cpt]._id);
-                if (expressionRegulière.exec(channel.URI.host) ||
-                    expressionRegulière.exec('www.' + channel.URI.host)) {
-                    var newListener = new TracingListener();
-                    event.subject.QueryInterface(Ci.nsITraceableChannel);
-                    newListener.originalListener = event.subject.setNewListener(newListener);
+                }
+                if (nestPasUnAppelElastic(channel)) {
                     console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
-                    accepter(channel, onglet);
-                    return;
+                }
+                accepter(channel, onglet);
+
+                return;
+            } else {
+                var expressionRegulière;
+                for (var cpt in context.domainesAutorises) {
+                    expressionRegulière = new RegExp("\w*[\:]{0,1}[\/]{0,2}" + context.domainesAutorises[cpt]._id);
+                    if (expressionRegulière.exec(channel.URI.host) ||
+                        expressionRegulière.exec('www.' + channel.URI.host)) {
+                        var newListener = new TracingListener();
+                        event.subject.QueryInterface(Ci.nsITraceableChannel);
+                        newListener.originalListener = event.subject.setNewListener(newListener);
+                        console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été acceptée: ' + channel.URI.asciiSpec);
+                        accepter(channel, onglet);
+                        return;
+                    }
                 }
             }
-        }
-        console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été bloquée: ' + channel.URI.asciiSpec);
-        bloquer(channel, onglet);
+            console.error("Dans le contexte " + onglet.hôteVisité + ' l\'adresse suivante a été bloquée: ' + channel.URI.asciiSpec);
+            bloquer(channel, onglet);
     }
 }
 
 function accepter(channel, onglet) {
     if (navigationPublique) {
-        journaliserRequête(channel, true);
+        journaliserRequête(channel, true, onglet);
     }
 
     //Dans tous les cas, nous ne donnons pas notre user agent.
@@ -650,8 +702,12 @@ function accepter(channel, onglet) {
     channel.setRequestHeader("Host", channel.URI.host, false);
 }
 
-function bloquer(channel, onglet) {
+function abandonnerRequête(channel) {
     channel.cancel(0x804B0002); //On annule la requête avec un NS_BINDING_ERROR
+}
+
+function bloquer(channel, onglet) {
+    abandonnerRequête(channel);
 
     var trouve = false;
     //Quelquesoit le cas, on enregistre le blocage sur l'onglet courant
