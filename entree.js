@@ -12,7 +12,6 @@ var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var adresseMaj = new RegExp('\w*[\:]{0,1}[\/]{0,2}aus5.mozilla.org.*');
 var adresseOcsp = new RegExp('\w*[\:]{0,1}[\/]{0,2}ocsp.*');
-//var patronReferer = new RegExp('http[s]{0,1}[\:]{0,1}[\/]{0,2}([a-z|A-Z|\.|\\-|\_]*)[\/]{0,1}.*');
 var sécurisation = require('profilSecurite/securisation');
 var navigationPublique = false;
 var jquery = data.url('js/jquery-2.2.4.min.js');
@@ -78,7 +77,6 @@ tabs[0].filtreJavascriptActif = true; //Par défaut, le module filtre le javascr
 addProgressListener(tabs[0]);
 
 tabs.on('open', function (tab) {
-    console.error('open url:' + tab.url);
     tab.hôteVisité = ''; //Libère le host visité pour que l'on puisse choisir une nouvelle adresse.
     context.ongletOuvertALinstant  = tab;
     tab.activate();
@@ -209,7 +207,6 @@ function nouvellePréférenceBooléennePourNouvelleVersion(nomPref, valeur) {
 }
 
 function nestPasUnAppelElastic(request) {
-    //var httpChannel = request.QueryInterface(Ci.nsIHttpChannel);
     return (request.URI.path !== '/requetes/requete' && request.URI.path !== '/requetes/reponse' && request.URI.port !== elasticPort);
 }
 
@@ -607,47 +604,16 @@ function corps(httpChannel) {
 
 function listener(event) {
     var onglet = tabs.activeTab;
-    //var nouvelOnglet =false;
     if (context.ongletOuvertALinstant) {
         onglet = context.ongletOuvertALinstant;
-        //nouvelOnglet = true;
         delete context.ongletOuvertALinstant;
     }
 
     if (onglet.filtreActif) {
 
         var channel = event.subject.QueryInterface(Ci.nsIHttpChannel);
-       /* var referer;
-        try {
-            referer = channel.getRequestHeader("Referer");
-        } catch (error) {
-            //nous avons affaire à une saisie utilisateur directe.
-        }
-        var hôteVisité = new RegExp(onglet.hôteVisité);
-
-        if (referer) {
-            var domaineReferer = patronReferer.exec(referer);
-            console.error('referer initial:' + referer +' regexp resultat:' + domaineReferer);
-        }
-        if (domaineReferer) {
-            console.error('referer: ' + domaineReferer[1] + ', hv: ' + onglet.hôteVisité + '.');
-        }
-
-            console.error('hv activetab:' + tabs.activeTab.hôteVisité);
-            console.error('hv onglet:' + onglet.hôteVisité);
-
-*/
-            /* ((!nouvelOnglet && domaineReferer && domaineReferer[1] === onglet.hôteVisité) ||
-             (!nouvelOnglet && !domaineReferer)||
-             (nouvelOnglet))*/
-            //((/*(!nouvelOnglet || nouvelOnglet) && */domaineReferer && domaineReferer[1] === onglet.hôteVisité && onglet.hôteVisité === '') ||
-            /*!nouvelOnglet &&*/ //!domaineReferer)||
-            //(nouvelOnglet && domaineReferer && domaineReferer[1] === tabs.activeTab.hôteVisité && onglet.hôteVisité === '')
-            //nouvelOnglet)
-            //&&
             var hôteVisité = new RegExp(onglet.hôteVisité);
             if (
-
                 (patronLocalhost1.exec(channel.URI.host) ||
                 patronLocalhost2.exec(channel.URI.host) ||
                 patronReseauLocal.exec(channel.URI.host) ||
