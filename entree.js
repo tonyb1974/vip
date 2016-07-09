@@ -11,6 +11,7 @@ var patronLocalhost1 = new RegExp('\w*[\:]{0,1}[\/]{0,2}localhost');
 var patronLocalhost2 = new RegExp('\w*[\:]{0,1}[\/]{0,2}127\.0\.0\.1');
 var patronReseauLocal = new RegExp('\w*[\:]{0,1}[\/]{0,2}192\.168\..*');
 var adresseMaj = new RegExp('\w*[\:]{0,1}[\/]{0,2}aus5.mozilla.org.*');
+var patronReferer = new RegExp('http[s]{0,1}[\:]{0,1}[\/]{0,2}([a-z|A-Z|\.|\\-|\_]*)[\/]{0,1}.*');
 var adresseOcsp = new RegExp('\w*[\:]{0,1}[\/]{0,2}ocsp.*');
 var sécurisation = require('profilSecurite/securisation');
 var navigationPublique = false;
@@ -703,6 +704,15 @@ function bloquer(channel, onglet) {
 
 function journaliserRequête(channel, status, onglet) {
     if (!modeSimple && navigationPublique && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
+
+        var referer = channel.referer;
+        if (referer) { //Raméner le referer à son domaine
+            var domaineReferer = patronReferer.exec(referer);
+            if (domaineReferer) {
+                referer = domaineReferer[1];
+            }
+        }
+
         var requête = {
             date: new Date().getTime(),
             fuseau: new Date().getTimezoneOffset(),
@@ -712,11 +722,11 @@ function journaliserRequête(channel, status, onglet) {
             format: channel.URI.scheme,
             sécurité: channel.URI.securityInfo,
             methode: channel.requestMethod,
-            hote: getHeader(channel, "host"),
+            hote: onglet.hôteVisité,//getHeader(channel, "host"),
             port: channel.URI.port,
             chemin: channel.URI.path,
             corps: corps(channel),
-            referer: channel.referer,
+            referer: referer,
             mode: channel.mode,
             contexte: channel.context,
             taille: Number(getHeader(channel, "Content-Length")) || -1,

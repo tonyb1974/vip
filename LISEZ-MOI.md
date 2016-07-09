@@ -248,6 +248,10 @@ curl -XPOST http://localhost:9200/requetes -d '{
           "type": "string",
           "index": "not_analyzed"
         },
+        "hôteVisité": {
+                  "type": "string",
+                  "index": "not_analyzed"
+        },
         "port": {
           "type": "long"
         },
@@ -340,6 +344,10 @@ curl -XPOST http://localhost:9200/requetes -d '{
         "hote": {
           "type": "string",
           "index": "not_analyzed"
+        },
+        "hôteVisité": {
+                  "type": "string",
+                  "index": "not_analyzed"
         },
         "port": {
           "type": "long"
