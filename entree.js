@@ -705,8 +705,14 @@ function bloquer(channel, onglet) {
 function journaliserRequête(channel, status, onglet) {
     if (!modeSimple && navigationPublique && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
 
-        var referer = channel.referer;
-        if (referer) { //Raméner le referer à son domaine
+        var referer;
+        try {
+            referer = channel.getRequestHeader("Referer");
+        } catch (error) {
+            //nous avons affaire à une saisie utilisateur directe.
+        }
+
+        if (referer) {
             var domaineReferer = patronReferer.exec(referer);
             if (domaineReferer) {
                 referer = domaineReferer[1];

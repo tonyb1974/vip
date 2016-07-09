@@ -5,7 +5,7 @@
           <em:type>2</em:type>
           <em:bootstrap>true</em:bootstrap>
           <em:unpack>false</em:unpack>
-          <em:version>0.0.8</em:version>
+          <em:version>0.0.9</em:version>
           <em:name>Extension pour une VIP (Vie privée)</em:name>
           <em:description>Un add-on pour protéger un maximum votre vie privée</em:description>
           <em:creator>Tony Blanchard</em:creator>
