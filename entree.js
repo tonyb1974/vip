@@ -706,16 +706,18 @@ function journaliserRequête(channel, status, onglet) {
     if (!modeSimple && navigationPublique && modeEtenduElastic && nestPasUnAppelElastic(channel) === true) {
 
         var referer;
+        var domaineReferer;
         try {
             referer = channel.getRequestHeader("Referer");
         } catch (error) {
             //nous avons affaire à une saisie utilisateur directe.
+            domaineReferer = onglet.hôteVisité;
         }
 
         if (referer) {
-            var domaineReferer = patronReferer.exec(referer);
+            domaineReferer = patronReferer.exec(referer);
             if (domaineReferer) {
-                referer = domaineReferer[1];
+                domaineReferer = domaineReferer[1];
             }
         }
 
@@ -728,11 +730,11 @@ function journaliserRequête(channel, status, onglet) {
             format: channel.URI.scheme,
             sécurité: channel.URI.securityInfo,
             methode: channel.requestMethod,
-            hote: onglet.hôteVisité,//getHeader(channel, "host"),
+            hote: getHeader(channel, "host"),
             port: channel.URI.port,
             chemin: channel.URI.path,
             corps: corps(channel),
-            referer: referer,
+            referer: domaineReferer,
             mode: channel.mode,
             contexte: channel.context,
             taille: Number(getHeader(channel, "Content-Length")) || -1,
