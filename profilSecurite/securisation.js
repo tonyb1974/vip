@@ -38,6 +38,8 @@ var prefs = {
 var préférencesInitiales = {};
 exports.préférencesInitiales = préférencesInitiales;
 
+var préférencesWebRTCInitiales = {};
+
 var préférencesSécurisantes = {
     "startup.homepage_welcome_url": "",
     "startup.homepage_welcome_url.additional": "",
@@ -319,6 +321,40 @@ exports.restaurerLesParamètres = function () {
     prefService.savePrefFile(null);
     notifications.notify({text: 'Restauration des paramètres effectuée'});
     return false; //Paramètres non sécurisés.
+}
+
+exports.autoriserWebRTC = function () {
+    notifications.notify({text: 'Autorisation des communications Web RTC'});
+
+    préférencesWebRTCInitiales["media.peerconnection.enabled"] = prefs.media.getBoolPref("peerconnection.enabled");
+    préférencesWebRTCInitiales["media.peerconnection.use_document_iceservers"] = prefs.media.getBoolPref("peerconnection.use_document_iceservers");
+    préférencesWebRTCInitiales["media.navigator.enabled"] = prefs.media.getBoolPref("navigator.enabled");
+    préférencesWebRTCInitiales["media.getusermedia.screensharing.enabled"] = prefs.media.getBoolPref("getusermedia.screensharing.enabled");
+    préférencesWebRTCInitiales["media.getusermedia.screensharing.allowed_domains"] = prefs.media.getCharPref("getusermedia.screensharing.allowed_domains");
+
+   try {
+        préférencesInitiales = JSON.parse(prefsViP.getCharPref('preferencesInitiales'));
+    } catch (error) {
+        notifications.notify({text: 'Une erreur s\'est produite durant la restauration des paramètres'});
+        return false;
+    }
+
+    prefs.media.setBoolPref("peerconnection.enabled", préférencesInitiales["media.peerconnection.enabled"]);
+    prefs.media.setBoolPref("peerconnection.use_document_iceservers", préférencesInitiales["media.peerconnection.use_document_iceservers"]);
+    prefs.media.setBoolPref("navigator.enabled", préférencesInitiales["media.navigator.enabled"]);
+    prefs.media.setBoolPref("getusermedia.screensharing.enabled", préférencesInitiales["media.getusermedia.screensharing.enabled"]);
+    prefs.media.setCharPref("getusermedia.screensharing.allowed_domains", préférencesInitiales["media.getusermedia.screensharing.allowed_domains"]);
+    return true; //WebRTC actif
+}
+
+exports.restaurerParamètresWebRTC = function() {
+    notifications.notify({text: 'Interdiction des communications Web RTC'});
+    prefs.media.setBoolPref("peerconnection.enabled", préférencesWebRTCInitiales["media.peerconnection.enabled"]);
+    prefs.media.setBoolPref("peerconnection.use_document_iceservers", préférencesWebRTCInitiales["media.peerconnection.use_document_iceservers"]);
+    prefs.media.setBoolPref("navigator.enabled", préférencesWebRTCInitiales["media.navigator.enabled"]);
+    prefs.media.setBoolPref("getusermedia.screensharing.enabled", préférencesWebRTCInitiales["media.getusermedia.screensharing.enabled"]);
+    prefs.media.setCharPref("getusermedia.screensharing.allowed_domains", préférencesWebRTCInitiales["media.getusermedia.screensharing.allowed_domains"]);
+    return false; //WebRTC inactif
 }
 
 exports.navigationPrivee = function () {

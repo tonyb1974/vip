@@ -7,11 +7,14 @@
 <body>
     <h1 class='ui-datepicker-title ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all'>Merci d'avoir choisit ViP !</h1>
     <div>
-        <h3>Informations utiles: </h3>
-        <h4><p>Ce plugin possède une documentation que vous pouvez trouver <a href='https://github.com/tonyb1974/vip/blob/master/LISEZ-MOI.md' target='_blank'>ici</a>.
-            <p>Les fonctionnalités et le fonctionnement de cette extension y sont listés et expliqués. Son code est open source et peut être trouvé au même endroit que sa documentation.</p>
-        <p>La politique de sécurité et de respect de la vie privée de ce module est la suivante:
-        <ul>
+        <h4><p>Ce plugin possède une documentation que vous pouvez trouver <a href='https://github.com/tonyb1974/vip/blob/master/LISEZ-MOI.md' target='_blank'>ici</a>.</p>
+        <p>Les fonctionnalités et le fonctionnement de cette extension y sont listés et expliqués. Son code est open source et peut être trouvé au même endroit que sa documentation.</p></h4>
+        <table style="width:100%">
+            <tr>
+                <th style="width:40%">Politique de sécurité et respect de la vie privée</th>
+                <th style="width:60%">Commandes disponibles</th>
+            </tr>
+            <tr><td><ul>
                 <li><span class='bleu'>Réversibilité des paramétres</span> amenés par le plugin</li>
                 <li><span class='bleu'>Réversibilité totale</span> de l'installation du plugin</li>
                 <li><span class='bleu'>Transparence</span> du code source</li>
@@ -19,10 +22,10 @@
                 <li><span class='bleu'>Aucune donnée personnelle collectée</span> hormis en mode étendu vers le domaine abritant le moteur de recherche Elasticsearch. Domaine que vous aurez choisis, la plupart du temps en <span class='bleu'>localhost</span></li>
                 <li>Durant une <span class='bleu'>navigation privée</span>, en mode simple ou étendu, <span class='bleu'>arrêt total du stockage des domaines inconnus et visités comme bannis</span></li>
                 <li>Durant une <span class='bleu'>navigation privée</span>, si le filtrage reste actif, il reste possible de modifier la liste blanche des domaines acceptés parmi la liste des domaines connus <span class='bleu'>avant</span> le début de navigation privée</li>
-            </ul></p>
-        <p>Commandes disponibles:
-        <ul>
+            </ul></td>
+            <td><ul>
                 <li><span class='bleu'>Alt-a</span> ou <span class='bleu'>Alt-h</span>, Affichage de ce panneau d'aide</li>
+                <li><span class='bleu'>Alt-i</span> ou <span class='bleu'>Alt-h</span>, Informations sur l'état de la sécurité</li>
                 <li><span class='bleu'>Alt-d</span>, modification de la liste blanche des domaines autorisés</li>
                 <li><span class='bleu'>Alt-o</span>, modification de la liste blanche des domaines autorisés dans le contexte de l'onglet actif. i.e., Les domaines bloqués correspondent à ceux qui ont été bloqués depuis l'onglet actif.</li>
                 <li><span class='bleu'>Alt-f</span>, activation/désactivation du filtrage, fonctionne par onglet</li>
@@ -33,8 +36,10 @@
                 <li><span class='bleu'>Alt-v</span>, permet de fermer l'onglet actuellement ouvert pour en ouvrir un autre qui accepte une première et unique adresse non obligatoirement présente dans la **liste blanche**.
                     La boîte de dialogue proposée permet de saisir une adresse libre ou bien d'en choisir une à partir des marques pages existants. Des raccourcis permettent de ne pas utiliser la souris. Focus sur le champs de saisie, touche haut et bas pour se déplacer dans la liste des adresses des marques pages, touche entrée pour sélectionner une valeur puis touche entrée pour visiter l'adresse saisie.
                 </li>
-            </ul></p>
-        </h4>
+                <li><span class='bleu'>Alt-r</span>, permet de d'activer/désactiver les communications de type WebRTC au risque de laisser fuiter quelques informations de sécurité. Voir <a href="https://ipleak.net" target="_blank" >ici</a>
+                Penser à le désactiver.</li>
+            </ul></td></tr>
+        </table>
     </div>
 <input id='fermer' value='Fermer' type='button'/>
 </body></html>

@@ -94,6 +94,8 @@ Dernier point, il est recommandé de ne pas mettre d'adresse comme **'www.latrib
 
 La combinaison de touches **'Alt-a'** ou **'Alt-h'** permet à l'utilisateur d'accéder à l'aide en ligne du module
 
+La combinaison de touches **'Alt-i'** permet à l'utilisateur de connaître l'état de la sécurité actuellement paramétrée par ce module
+
 La combinaison de touches **'Alt-d'** permet à l'utilisateur de voir les domaines autorisés et les domaines bannis.
 Il peut alors choisir de bannir un domaine connu ou d'ajouter un domaine banni aux domaines autorisés.
 
@@ -117,6 +119,9 @@ La combinaison de touches **'Alt-p'** permet de revenir aux paramètres initiaux
 
 La combinaison de touches **'Alt-v'** permet de fermer l'onglet actuellement ouvert pour en ouvrir un autre qui accepte une première et unique adresse non obligatoirement présente dans la **liste blanche**.
 La boîte de dialogue proposée permet de saisir une adresse libre ou bien d'en choisir une à partir des marques pages existants. Des raccourcis permettent de ne pas utiliser la souris. Focus sur le champs de saisie, touche haut et bas pour se déplacer dans la liste des adresses des marques pages, touche entrée pour sélectionner une valeur puis touche entrée pour visiter l'adresse saisie.
+
+La combinaison de touches **'Alt-r'** permet de d'activer/désactiver les communications de type WebRTC qui participent à des fuites d'informations sur votre système (voir [ici](https://ipleak.net). Cette combinaison de touches permet donc d'ouvrir Firefox aux communications peer to peer. 
+Cette autorisation est globale à tous les onglets et il convient donc de désactiver le webRTC une fois la communication finie.
 
 Dans la version standard, sans mode étendu et moteur de recherche, seule la liste des domaines autorisés reste persistente entre deux exécutions de Firefox.
 

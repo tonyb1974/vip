@@ -100,8 +100,15 @@ function msgFiltreJavascriptActif(filtreActif){
         return ' > Filtre javascript inactif';
     }
 }
+
+function msgWebRTC(actif) {
+    if (actif) {
+        return ' > Web RTC actif';
+    } else {
+        return ' > Web RTC inactif';
+    }
+}
 tabs.on('activate', function (tab) {
-    notifications.notify({text: tab.hôteVisité + msgFiltreActif(tab.filtreActif) + msgFiltreJavascriptActif(tab.filtreJavascriptActif)});
     addProgressListener(tab)
     respectNavigationPrivée(tab);
 });
@@ -125,7 +132,7 @@ var prefs = prefService
 //Initialisation de la page d'installation
 var panelAide = require("sdk/panel").Panel({
     width: 900,
-    height: 690,
+    height: 650,
     contentURL: data.url("aide.html"),
     contentScriptFile: [jquery, jqueryUi, data.url("js/aide.js")]
 });
@@ -491,6 +498,17 @@ var restaurerParamètres = Hotkey({
     }
 });
 
+var restaurerParamètresWebRTC = Hotkey({
+    combo: 'alt-r',
+    onPress: function () {
+        if (webRTCActif) {
+            webRTCActif = sécurisation.restaurerParamètresWebRTC();
+        } else {
+            webRTCActif = sécurisation.autoriserWebRTC();
+        }
+    }
+});
+
 var gestionDomainesHotKey = Hotkey({
     combo: 'alt-d',
     onPress: function () {
@@ -549,9 +567,9 @@ var modeEtenduHotKey = Hotkey({
 });
 
 var modeEtenduHotKey = Hotkey({
-    combo: 'alt-q',
+    combo: 'alt-i',
     onPress: function () {
-        notifications.notify({text: 'Hôte actuel pour l\'onglet courant: ' + tabs.activeTab.hôteVisité});
+        notifications.notify({text: tabs.activeTab.hôteVisité + msgFiltreActif(tabs.activeTab.filtreActif) + msgFiltreJavascriptActif(tabs.activeTab.filtreJavascriptActif) + msgWebRTC(webRTCActif)});
     }
 });
 var nomMultiplesHotKey = Hotkey({
@@ -571,6 +589,7 @@ var nomMultiplesHotKey = Hotkey({
 chercherDomaines();
 chercherDomainesBannis();
 paramètresSécurisés = sécurisation.navigationPrivee();
+var webRTCActif=false;
 
 function getHeader(channel, header) {
     try {
