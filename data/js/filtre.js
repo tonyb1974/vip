@@ -9,7 +9,7 @@ self.port.on('nettoyer', function () {
         return element.nodeType == 8;
     };
 
-    //Pour que les utilisateurs google puisse l'utiliser avec ce plugin tout en conservant un minimum de vie privée ;-)
+    //Pour que les utilisateurs google et de Qwant puissent les utiliser avec ce plugin tout en conservant un minimum de vie privée ;-)
     if(document.location.host.startsWith('www.google.')){
         var googleTranslate = function(index, element) {
             var params = $(element).attr('href').split('&');
@@ -18,15 +18,28 @@ self.port.on('nettoyer', function () {
                 if (urlGoogle) {
                     var urlRéèlle = urlGoogle[urlGoogle.length - 1].split(':');
                     if (urlRéèlle) {
-                        $(element).attr('href', urlRéèlle[urlRéèlle.length - 1 ]);
+                        $(element).attr('href', decodeURIComponent(urlRéèlle[urlRéèlle.length - 1 ]));
                     } else {
-                        $(element).attr('href', urlGoogle[urlGoogle.length - 1]);
+                        $(element).attr('href', decodeURIComponent(urlGoogle[urlGoogle.length - 1]));
                     }
+                    $(element).attr('target', '_blank');
                 }
             }
         }
         $("a[href^='/url']").each(googleTranslate);
     }
+    else if (document.location.host.startsWith('lite.qwant.com')) {
+        var qwantTranslate = function(index, element) {
+            var params = $(element).attr('href').split('%3D/');
+            if (params[1]) {
+                var urlRéèlle = params[1].split('?') [0];
+                $(element).attr('href', decodeURIComponent(urlRéèlle));
+                $(element).attr('target', '_blank');
+            }
+        }
+        $("a[href^='/redirect']").each(qwantTranslate);
+    }
+
 
     var inhiber = function (index, element) {
         element.nodeValue = "#";
@@ -37,10 +50,10 @@ self.port.on('nettoyer', function () {
     $(":root").contents().filter(filter).each(inhiber);
 
 
-    //Tous les scripts qui ne sont pas chez l'hôte initial ou inline est supprimé
+    //Tous les scripts qui ne sont pas chez l'hôte initial ou inline sont supprimés
     $("script").each(function (index, element) {
         var src = $(this).attr('src');
-        //Désactivation des scripts qui n'ont pas de sources extérieures et localisées sur un serveur.
+        //Désactivation des scripts qui n'ont pas de sources extérieures et localisées de manière identifiable sur un serveur.
         if (!src) {
             $(this).replaceWith("<script></script>");
         }
