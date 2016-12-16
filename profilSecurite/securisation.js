@@ -164,6 +164,7 @@ var préférencesSécurisantes = {
     "browser.newtabpage.enabled": false,
     "browser.newtabpage.enhanced": false,
     "browser.newtabpage.introShown": true,
+    "browser.link.open_newwindow": 3,
     "general.autoScroll": false,
     "security.dialog_enable_delay": 400,
     "plugins.notifyMissingFlash": false,
@@ -637,6 +638,7 @@ exports.navigationPrivee = function () {
     prefs.browser.setBoolPref("newtabpage.enabled", préférencesSécurisantes["browser.newtabpage.enabled"]);
     prefs.browser.setBoolPref("newtabpage.enhanced", préférencesSécurisantes["browser.newtabpage.enhanced"]);
     prefs.browser.setBoolPref("newtabpage.introShown", préférencesSécurisantes["browser.newtabpage.introShown"]);
+    prefs.browser.setIntPref("link.open_newwindow",   préférencesSécurisantes["browser.link.open_newwindow"]);
 
 // Disable (broken) auto-scrolling via middle-click:
     prefs.general.setBoolPref("autoScroll", préférencesSécurisantes["general.autoScroll"]);

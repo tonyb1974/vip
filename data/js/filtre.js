@@ -38,8 +38,14 @@ self.port.on('nettoyer', function () {
             }
         }
         $("a[href^='/redirect']").each(qwantTranslate);
+    } else {
+        $("a[href^='http']").each(function (i, e) {
+            var href = $(e).attr('href');
+            if (href.startsWith(document.location.protocol + '//' + document.location.host) === false) {
+                $(e).attr('target', '_blank');
+            }
+        });
     }
-
 
     var inhiber = function (index, element) {
         element.nodeValue = "#";
