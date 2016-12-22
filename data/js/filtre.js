@@ -1,20 +1,18 @@
-
-var parent = function(el) {
-    if (el.classList.contains('userContentWrapper')) return el;
+var noeudParentSignigfiant = function (el) {
+    if (el && el.classList && el.classList.contains('userContentWrapper')) return el;
 
     var parent = el.parentNode;
-    while (parent !== document.body) {
+    while (parent) {
         parent = parent.parentNode;
-        if (parent.classList.contains('userContentWrapper')) {
+        if (parent && parent.classList && parent.classList.contains('userContentWrapper')) {
             return parent;
         }
     }
     return parent;
 }
 
-var supprimer = function(el) {
-    var parentASupprimer = parent(el);
-    console.error('Parent à supprimer:' + parentASupprimer);
+var supprimer = function (el) {
+    var parentASupprimer = noeudParentSignigfiant(el);
     if (parentASupprimer.nodeName === 'body') {
         alert('Racine du document atteinte !');
     } else {
@@ -22,31 +20,39 @@ var supprimer = function(el) {
     }
 }
 
+var running = false;
+
 var filtresFB = function () {
-    console.error('Exécution de filtresFB() !');
-    var pymk = document.getElementById('pagelet_pymk_timeline'); //Supprime les propositions de contact
-    if (pymk) {
-        pymk.parentNode.removeChild(pymk);
+    if (running === true) {
+        return;
     }
+    else {
+        running = true;
 
-    //Supprimer la colonne de droite dans son journal perso
-    var egoPanel = document.getElementById('pagelet_ego_pane');
-    if (egoPanel) {
-        egoPanel.parentNode.removeChild(egoPanel);
-    }
+        /*var pymk = document.getElementById('pagelet_pymk_timeline'); //Supprime les propositions de contact
+        if (pymk) {
+            pymk.parentNode.removeChild(pymk);
+        }*/
 
-    //Supprimer la colonne de droite sur le mur
-    egoPanel = document.getElementById('u_0_q');
-    if (egoPanel) {
-        egoPanel.parentNode.removeChild(egoPanel);
-    }
-
-    var elements = document.getElementsByTagName('span');
-    for (var i = 0; i < elements.length; i++) {
-        if (elements[i].innerText === 'Publication suggérée' || elements[i].innerText === "Créer une publicité" || elements[i].innerText === 'Jeu suggéré') {
-            console.error('Suppression de :' + elements[i].innerText);
-            supprimer(elements[i]);
+        //Supprimer la colonne de droite dans son journal perso
+        var egoPanel = document.getElementById('pagelet_ego_pane');
+        if (egoPanel) {
+            egoPanel.parentNode.removeChild(egoPanel);
         }
+
+        //Supprimer la colonne de droite sur le mur
+        egoPanel = document.getElementById('u_0_q');
+        if (egoPanel) {
+            egoPanel.parentNode.removeChild(egoPanel);
+        }
+
+        var elements = document.getElementsByTagName('span');
+        for (var i = 0; i < elements.length; i++) {
+            if (elements[i].innerText === 'Publication suggérée' || elements[i].innerText === "Créer une publicité" || elements[i].innerText === 'Jeu suggéré') {
+                supprimer(elements[i]);
+            }
+        }
+        running = false;
     }
 }
 
@@ -55,13 +61,10 @@ self.port.on('nettoyagesPrimaires', function () {
     document.vip = {};
 
     if (document.location.host.startsWith('www.facebook.')) {
-        document.vip.supprimer= supprimer;
-        document.vip.parent = parent;
-        document.vip.filtresFB = filtresFB;
-        document.vip.filtresFB();
-        window.document.onload = document.vip.filtresFB;
-        window.document.onready = document.vip.filtresFB;
-        window.onscroll = document.vip.filtresFB;
+        filtresFB();
+        window.document.onload = filtresFB;
+        window.document.onready = filtresFB;
+        window.onscroll = filtresFB;
     }
 });
 
