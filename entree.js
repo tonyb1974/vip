@@ -451,6 +451,14 @@ var filtreJavascript = function (worker) {
         filtreNeutre(worker);
     }
 }
+
+var filtresPrimaires = function (worker) {
+    if (tabs.activeTab.filtreJavascriptActif) {
+        worker.port.emit("nettoyagesPrimaires");
+    } else {
+        filtreNeutre(worker);
+    }
+}
 var viderLocalStorage = function (worker) {
     worker.port.emit("localStorage");
 }
@@ -462,11 +470,18 @@ var filtreNeutre = function(worker) {
 var moduleFiltrant = pageMod.PageMod({
     include: "*",
     contentScriptFile: [data.url('js/filtre.js'), jquery],
+    contentScriptWhen: "start",
+    onAttach: filtresPrimaires
+});
+
+var moduleFiltrant2 = pageMod.PageMod({
+    include: "*",
+    contentScriptFile: [data.url('js/filtre.js'), jquery],
     contentScriptWhen: "ready",
     onAttach: filtreJavascript
 });
 
-var moduleFiltrant = pageMod.PageMod({
+var moduleFiltrant3 = pageMod.PageMod({
     include: "*",
     contentScriptFile: [data.url('js/filtre.js'), jquery],
     contentScriptWhen: "end",
